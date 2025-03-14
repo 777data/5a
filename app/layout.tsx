@@ -3,6 +3,9 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import { Toaster } from "@/components/ui/toaster";
+import { cookies } from "next/headers";
+import { prisma } from "@/lib/prisma";
+import { EnvironmentSelector } from "@/components/environment-selector";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -11,11 +14,23 @@ export const metadata: Metadata = {
   description: "Application de test d'APIs",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const environments = await prisma.environment.findMany({
+    orderBy: {
+      createdAt: 'desc',
+    },
+    select: {
+      id: true,
+      name: true,
+    },
+  });
+
+  const activeEnvironmentId = cookies().get('activeEnvironmentId')?.value;
+
   return (
     <html lang="fr">
       <body className={inter.className}>
@@ -70,9 +85,20 @@ export default function RootLayout({
           </aside>
 
           {/* Main Content */}
-          <main className="flex-1 overflow-y-auto bg-gray-50">
-            {children}
-          </main>
+          <div className="flex-1 flex flex-col">
+            {/* Header */}
+            <header className="h-16 border-b bg-white px-6 flex items-center justify-end">
+              <EnvironmentSelector
+                environments={environments}
+                selectedEnvironmentId={activeEnvironmentId}
+              />
+            </header>
+
+            {/* Content */}
+            <main className="flex-1 overflow-y-auto bg-gray-50">
+              {children}
+            </main>
+          </div>
         </div>
         <Toaster />
       </body>
