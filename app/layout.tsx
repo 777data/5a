@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Toaster } from "@/components/ui/toaster";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { EnvironmentSelector } from "@/components/environment-selector";
+import { ApplicationSelector } from "@/components/application-selector";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,7 +19,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const environments = await prisma.environment.findMany({
+  const applications = await prisma.application.findMany({
     orderBy: {
       createdAt: 'desc',
     },
@@ -29,7 +29,8 @@ export default async function RootLayout({
     },
   });
 
-  const activeEnvironmentId = cookies().get('activeEnvironmentId')?.value;
+  const cookieStore = await cookies();
+  const activeApplicationId = cookieStore.get('activeApplicationId')?.value;
 
   return (
     <html lang="fr">
@@ -109,9 +110,9 @@ export default async function RootLayout({
           <div className="flex-1 flex flex-col">
             {/* Header */}
             <header className="h-16 border-b bg-white px-6 flex items-center justify-end">
-              <EnvironmentSelector
-                environments={environments}
-                selectedEnvironmentId={activeEnvironmentId}
+              <ApplicationSelector
+                applications={applications}
+                selectedApplicationId={activeApplicationId}
               />
             </header>
 
