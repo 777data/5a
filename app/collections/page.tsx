@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import { prisma } from "@/lib/prisma"
-import { CollectionList } from "./components/collection-list"
+import { CollectionTable } from "./components/collection-table"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { notFound } from "next/navigation"
@@ -62,7 +62,7 @@ export default async function CollectionsPage() {
         </Button>
       </div>
 
-      <CollectionList collections={application.collections} />
+      <CollectionTable collections={application.collections} />
     </div>
   )
 } 
