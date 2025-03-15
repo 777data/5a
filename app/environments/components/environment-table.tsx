@@ -30,16 +30,13 @@ type Environment = {
   application: {
     name: string
   }
-}
-
-type EnvironmentWithCount = Environment & {
   _count: {
     variableValues: number
   }
 }
 
 type EnvironmentTableProps = {
-  environments: EnvironmentWithCount[]
+  environments: Environment[]
 }
 
 export function EnvironmentTable({ environments }: EnvironmentTableProps) {
@@ -107,7 +104,7 @@ export function EnvironmentTable({ environments }: EnvironmentTableProps) {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
-                      title="Variables"
+                      title="Valeurs des variables"
                       onClick={() => router.push(`/environments/${environment.id}/variables`)}
                     >
                       <svg
@@ -174,7 +171,7 @@ export function EnvironmentTable({ environments }: EnvironmentTableProps) {
             {environments.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="text-center py-6 text-gray-500">
-                  Aucun environnement n&apos;a été créé
+                  Aucun environnement n'a été créé
                 </TableCell>
               </TableRow>
             )}
@@ -188,7 +185,7 @@ export function EnvironmentTable({ environments }: EnvironmentTableProps) {
             <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
             <AlertDialogDescription>
               Cette action est irréversible. Cela supprimera définitivement l&apos;environnement
-              &quot;{environmentToDelete?.name}&quot; et toutes ses variables associées.
+              &quot;{environmentToDelete?.name}&quot; et toutes ses valeurs de variables associées.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

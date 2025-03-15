@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { Edit, Play, Trash2 } from "lucide-react"
+import { prisma } from "@/lib/prisma"
 
 type Api = {
   id: string
@@ -174,11 +175,23 @@ export function ApiTable({
   async function testApi(apiId: string) {
     setIsTestLoading(true)
     try {
-      console.log({
+      // Log des IDs sélectionnés
+      console.log('Test unique API:', {
+        apiId,
         applicationId,
         selectedEnvironment,
         selectedAuthentication,
       })
+
+      // Récupérer les variables de l'environnement
+      const response = await fetch(`/api/environments/${selectedEnvironment}/variables`)
+      if (!response.ok) {
+        throw new Error("Impossible de récupérer les variables")
+      }
+      const variables = await response.json()
+      
+      // Log des variables trouvées
+      console.log('Variables trouvées:', variables)
     } catch (error) {
       console.error('Erreur:', error)
       toast({
@@ -194,11 +207,23 @@ export function ApiTable({
   async function testSelectedApis() {
     setIsTestLoading(true)
     try {
-      console.log({
+      // Log des IDs sélectionnés
+      console.log('Test multiple APIs:', {
+        selectedApis: Array.from(selectedApis),
         applicationId,
         selectedEnvironment,
         selectedAuthentication,
       })
+
+      // Récupérer les variables de l'environnement
+      const response = await fetch(`/api/environments/${selectedEnvironment}/variables`)
+      if (!response.ok) {
+        throw new Error("Impossible de récupérer les variables")
+      }
+      const variables = await response.json()
+      
+      // Log des variables trouvées
+      console.log('Variables trouvées:', variables)
     } catch (error) {
       console.error('Erreur:', error)
       toast({

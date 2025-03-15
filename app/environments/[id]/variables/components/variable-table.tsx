@@ -24,12 +24,9 @@ import { useState } from "react"
 import { useToast } from "@/hooks/use-toast"
 
 type Variable = {
-  variable: {
-    id: string
-    name: string
-  }
-  value: string
   id: string
+  name: string
+  value: string
 }
 
 type VariableTableProps = {
@@ -57,7 +54,7 @@ export function VariableTable({ variables, environmentId }: VariableTableProps) 
 
       toast({
         title: "Variable supprimée",
-        description: `La variable "${variable.variable.name}" a été supprimée avec succès.`,
+        description: `La variable "${variable.name}" a été supprimée avec succès.`,
       })
 
       router.refresh()
@@ -88,7 +85,7 @@ export function VariableTable({ variables, environmentId }: VariableTableProps) 
           <TableBody>
             {variables.map((variable) => (
               <TableRow key={variable.id}>
-                <TableCell className="font-medium">{variable.variable.name}</TableCell>
+                <TableCell className="font-medium">{variable.name}</TableCell>
                 <TableCell>{variable.value}</TableCell>
                 <TableCell>
                   <div className="flex gap-2">
@@ -142,7 +139,7 @@ export function VariableTable({ variables, environmentId }: VariableTableProps) 
             {variables.length === 0 && (
               <TableRow>
                 <TableCell colSpan={3} className="text-center py-6 text-gray-500">
-                  Aucune variable n&apos;a été créée
+                  Aucune variable n'a été créée
                 </TableCell>
               </TableRow>
             )}
@@ -156,7 +153,7 @@ export function VariableTable({ variables, environmentId }: VariableTableProps) 
             <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
             <AlertDialogDescription>
               Cette action est irréversible. Cela supprimera définitivement la variable
-              &quot;{variableToDelete?.variable.name}&quot; pour cet environnement.
+              {variableToDelete?.name && ` "${variableToDelete.name}"`}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

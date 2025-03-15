@@ -11,7 +11,8 @@ export async function PUT(request: Request) {
     const json = await request.json()
     const body = updateActiveApplicationSchema.parse(json)
 
-    cookies().set('activeApplicationId', body.applicationId)
+    const cookieStore = cookies()
+    await cookieStore.set('activeApplicationId', body.applicationId)
 
     return new NextResponse(null, { status: 204 })
   } catch (error) {

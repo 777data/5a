@@ -21,21 +21,6 @@ export async function PUT(
       )
     }
 
-    // Vérifie si le nom est déjà utilisé par un autre environnement
-    const existingEnvironment = await prisma.environment.findFirst({
-      where: {
-        name: validation.data.name,
-        id: { not: params.id },
-      },
-    })
-
-    if (existingEnvironment) {
-      return NextResponse.json(
-        { error: "Un environnement avec ce nom existe déjà" },
-        { status: 400 }
-      )
-    }
-
     const environment = await prisma.environment.update({
       where: { id: params.id },
       data: validation.data,

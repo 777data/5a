@@ -33,9 +33,6 @@ export default async function VariablePage({ params }: PageParams) {
     where: {
       id: variableId,
       environmentId: environmentId
-    },
-    include: {
-      variable: true
     }
   })
 

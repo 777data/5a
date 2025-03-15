@@ -24,15 +24,10 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>
 
-type Variable = {
-  id: string
-  name: string
-}
-
 type VariableValue = {
   id: string
+  name: string
   value: string
-  variable: Variable
 }
 
 type VariableFormProps = {
@@ -48,7 +43,7 @@ export function VariableForm({ environmentId, variableValue }: VariableFormProps
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: variableValue?.variable.name ?? "",
+      name: variableValue?.name ?? "",
       value: variableValue?.value ?? "",
     },
   })

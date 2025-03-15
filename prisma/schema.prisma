@@ -47,7 +47,7 @@ model Authentication {
 
 model Environment {
   id             String          @id @default(uuid())
-  name           String          @unique
+  name           String
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   variableValues VariableValue[]
@@ -57,23 +57,15 @@ model Environment {
   @@index([applicationId])
 }
 
-model Variable {
-  id        String          @id @default(uuid())
-  name      String          @unique
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
-  values    VariableValue[]
-}
-
 model VariableValue {
   id            String      @id @default(uuid())
+  name          String
   value         String
-  variableId    String
   environmentId String
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  variable      Variable    @relation(fields: [variableId], references: [id], onDelete: Cascade)
 
-  @@unique([variableId, environmentId])
+  @@unique([name, environmentId])
+  @@index([environmentId])
 }

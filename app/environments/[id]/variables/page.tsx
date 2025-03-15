@@ -11,7 +11,7 @@ type PageParams = {
 }
 
 export default async function EnvironmentVariablesPage({ params }: PageParams) {
-  const environmentId = params.id
+  const environmentId = await params.id
 
   const environment = await prisma.environment.findUnique({
     where: { id: environmentId },
@@ -30,15 +30,15 @@ export default async function EnvironmentVariablesPage({ params }: PageParams) {
 
   const variables = await prisma.variableValue.findMany({
     where: {
-      environmentId: environmentId
+      environmentId
     },
-    include: {
-      variable: true
+    select: {
+      id: true,
+      name: true,
+      value: true
     },
     orderBy: {
-      variable: {
-        name: 'asc'
-      }
+      name: 'asc'
     }
   })
 

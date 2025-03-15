@@ -7,6 +7,33 @@ const createVariableValueSchema = z.object({
   value: z.string().min(1),
 })
 
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const environmentId = params.id
+
+    // Récupérer toutes les variables de l'environnement
+    const variables = await prisma.variableValue.findMany({
+      where: {
+        environmentId: environmentId
+      },
+      orderBy: {
+        name: 'asc'
+      }
+    })
+
+    return NextResponse.json(variables)
+  } catch (error) {
+    console.error('[GET_VARIABLES]', error)
+    return NextResponse.json(
+      { error: "Une erreur est survenue lors de la récupération des variables" },
+      { status: 500 }
+    )
+  }
+}
+
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
@@ -28,23 +55,11 @@ export async function POST(
       )
     }
 
-    // Vérifier si la variable existe déjà
-    let variable = await prisma.variable.findFirst({
-      where: { name: body.name },
-    })
-
-    // Si la variable n'existe pas, la créer
-    if (!variable) {
-      variable = await prisma.variable.create({
-        data: { name: body.name },
-      })
-    }
-
-    // Vérifier si une valeur existe déjà pour cette variable dans cet environnement
+    // Vérifier si une variable avec ce nom existe déjà dans cet environnement
     const existingValue = await prisma.variableValue.findUnique({
       where: {
-        variableId_environmentId: {
-          variableId: variable.id,
+        name_environmentId: {
+          name: body.name,
           environmentId: environmentId,
         },
       },
@@ -60,12 +75,9 @@ export async function POST(
     // Créer la valeur de la variable
     const variableValue = await prisma.variableValue.create({
       data: {
+        name: body.name,
         value: body.value,
-        variableId: variable.id,
         environmentId: environmentId,
-      },
-      include: {
-        variable: true,
       },
     })
 

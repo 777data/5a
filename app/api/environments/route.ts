@@ -2,7 +2,6 @@ import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { cookies } from "next/headers"
-import { redirect } from "next/navigation"
 
 const createEnvironmentSchema = z.object({
   name: z.string().min(1),
@@ -38,7 +37,7 @@ export async function POST(request: Request) {
 
     const environment = await prisma.environment.create({
       data: {
-        ...body,
+        name: body.name,
         applicationId: activeApplicationId,
       },
     })
