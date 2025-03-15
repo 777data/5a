@@ -77,6 +77,16 @@ type TestResult = {
 
 const STORAGE_KEY = 'api-test-preferences'
 
+// Fonction utilitaire pour remplacer les variables
+function replaceVariables(template: string, variables: Array<{ name: string, value: string }>): string {
+  let result = template
+  variables.forEach(variable => {
+    const pattern = new RegExp(`{{${variable.name}}}`, 'g')
+    result = result.replace(pattern, variable.value)
+  })
+  return result
+}
+
 export function ApiTable({ 
   apis, 
   applicationId, 
@@ -175,9 +185,22 @@ export function ApiTable({
   async function testApi(apiId: string) {
     setIsTestLoading(true)
     try {
-      // Log des IDs sélectionnés
+      // Trouver l'API sélectionnée
+      const selectedApi = apis.find(api => api.id === apiId)
+      if (!selectedApi) {
+        throw new Error("API non trouvée")
+      }
+      
+      // Log des informations détaillées de l'API
       console.log('Test unique API:', {
-        apiId,
+        api: {
+          id: selectedApi.id,
+          name: selectedApi.name,
+          url: selectedApi.url,
+          method: selectedApi.method,
+          headers: selectedApi.headers,
+          body: selectedApi.body
+        },
         applicationId,
         selectedEnvironment,
         selectedAuthentication,
@@ -192,6 +215,13 @@ export function ApiTable({
       
       // Log des variables trouvées
       console.log('Variables trouvées:', variables)
+
+      // Remplacer les variables dans l'URL
+      const url = replaceVariables(selectedApi.url, variables)
+
+      // Log de l'URL après remplacement des variables
+      console.log('URL avec variables remplacées:', url)
+
     } catch (error) {
       console.error('Erreur:', error)
       toast({
