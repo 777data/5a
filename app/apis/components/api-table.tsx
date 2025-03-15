@@ -47,6 +47,7 @@ type Api = {
   method: string
   headers: Record<string, string>
   body: any
+  order: number
   createdAt: Date
 }
 
@@ -331,7 +332,7 @@ export function ApiTable({
   }
 
   async function testSelectedApis() {
-    setIsTestLoading(true)
+    setIsLoading(true)
     try {
       // Récupérer les variables de l'environnement
       const variablesResponse = await fetch(`/api/environments/${selectedEnvironment}/variables`)
@@ -341,21 +342,24 @@ export function ApiTable({
       const variables = await variablesResponse.json()
 
       // Récupérer l'authentification sélectionnée
-      const authResponse = await fetch(`/api/applications/${applicationId}/authentications/${selectedAuthentication}`)
-      if (!authResponse.ok) {
-        throw new Error("Impossible de récupérer l'authentification")
+      let auth = null
+      if (selectedAuthentication) {
+        const authResponse = await fetch(`/api/applications/${applicationId}/authentications/${selectedAuthentication}`)
+        if (!authResponse.ok) {
+          throw new Error("Impossible de récupérer l'authentification")
+        }
+        auth = await authResponse.json()
       }
-      const auth = await authResponse.json()
 
-      // Récupérer les APIs sélectionnées
-      const selectedApisList = apis.filter(api => selectedApis.has(api.id))
-      
-      // Préparer les résultats
-      const results = []
-      let totalDuration = 0
+      // Récupérer les APIs sélectionnées et les trier par ordre
+      const selectedApisList = apis
+        .filter(api => selectedApis.has(api.id))
+        .sort((a, b) => a.order - b.order)
+
+      // Tester chaque API dans l'ordre
       let overallStatus = "SUCCESS"
-      
-      // Tester chaque API sélectionnée
+      const results = []
+
       for (const api of selectedApisList) {
         try {
           // Remplacer les variables dans l'URL
@@ -363,8 +367,8 @@ export function ApiTable({
 
           // Préparer les headers avec les variables remplacées et l'authentification
           const headers: Record<string, string> = {
-            'apiKey': auth.apiKey,
-            'token': auth.token
+            'apiKey': auth?.apiKey || '',
+            'token': auth?.token || ''
           }
           
           // Ajouter les headers personnalisés de l'API
@@ -407,7 +411,6 @@ export function ApiTable({
           })
 
           const duration = Date.now() - startTime
-          totalDuration += duration
 
           const result = await apiResponse.json()
           
@@ -461,7 +464,7 @@ export function ApiTable({
           applicationId,
           environmentId: selectedEnvironment,
           authenticationId: selectedAuthentication,
-          duration: totalDuration,
+          duration: results.reduce((total, result) => total + result.duration, 0),
           status: overallStatus,
           results
         })
@@ -495,7 +498,7 @@ export function ApiTable({
         description: error instanceof Error ? error.message : "Une erreur est survenue lors des tests",
       })
     } finally {
-      setIsTestLoading(false)
+      setIsLoading(false)
     }
   }
 

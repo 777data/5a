@@ -38,6 +38,7 @@ model Api {
   method        String         // "GET" | "POST" | "PUT" | "DELETE" | "PATCH"
   headers       Json?
   body          Json?
+  order         Int            @default(0)
   application   Application     @relation(fields: [applicationId], references: [id])
   applicationId String
   collection    Collection?     @relation(fields: [collectionId], references: [id])

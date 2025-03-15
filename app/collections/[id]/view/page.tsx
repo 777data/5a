@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import { notFound } from "next/navigation"
 import { ApiTable } from "@/app/apis/components/api-table"
+import { ApiOrderManager } from "@/app/collections/components/api-order-manager"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Plus } from "lucide-react"
@@ -19,7 +20,7 @@ export default async function CollectionDetailPage({ params }: { params: { id: s
       },
       apis: {
         orderBy: {
-          createdAt: 'desc',
+          order: 'asc',
         },
       },
     },
@@ -71,6 +72,14 @@ export default async function CollectionDetailPage({ params }: { params: { id: s
         </div>
       </div>
 
+      <div className="mb-8">
+        <ApiOrderManager 
+          apis={collection.apis} 
+          collectionId={collection.id}
+        />
+      </div>
+
+      <h2 className="text-xl font-semibold mb-4">APIs de la collection</h2>
       <ApiTable 
         apis={collection.apis} 
         applicationId={collection.application.id}
