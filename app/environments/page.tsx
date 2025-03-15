@@ -3,7 +3,7 @@ import { EnvironmentTable } from "./components/environment-table"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { cookies } from "next/headers"
-import { redirect } from "next/navigation"
+import { notFound } from "next/navigation"
 
 export default async function EnvironmentsPage() {
   const cookieStore = await cookies()
@@ -22,26 +22,27 @@ export default async function EnvironmentsPage() {
     )
   }
 
-  const environments = await prisma.environment.findMany({
-    where: {
-      applicationId: activeApplicationId,
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
+  const application = await prisma.application.findUnique({
+    where: { id: activeApplicationId },
     include: {
-      _count: {
-        select: {
-          variableValues: true,
+      environments: {
+        orderBy: {
+          createdAt: 'desc',
         },
-      },
-      application: {
-        select: {
-          name: true,
+        include: {
+          _count: {
+            select: {
+              variableValues: true,
+            },
+          },
         },
       },
     },
   })
+
+  if (!application) {
+    notFound()
+  }
 
   return (
     <div className="p-6">
@@ -49,7 +50,7 @@ export default async function EnvironmentsPage() {
         <div>
           <h1 className="text-2xl font-bold">Environnements</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Application : {environments[0]?.application.name ?? "Inconnue"}
+            Application : {application.name}
           </p>
         </div>
         <Button asChild>
@@ -57,7 +58,7 @@ export default async function EnvironmentsPage() {
         </Button>
       </div>
 
-      <EnvironmentTable environments={environments} />
+      <EnvironmentTable environments={application.environments} />
     </div>
   )
 } 
