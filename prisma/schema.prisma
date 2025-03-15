@@ -7,6 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Application {
+  id           String        @id @default(uuid())
+  name         String        @unique
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  environments Environment[]
+}
+
 model Api {
   id        String   @id @default(uuid())
   name      String
@@ -33,6 +41,8 @@ model Environment {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   variableValues VariableValue[]
+  application    Application?    @relation(fields: [applicationId], references: [id])
+  applicationId  String?
 }
 
 model Variable {
