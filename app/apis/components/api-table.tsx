@@ -300,9 +300,23 @@ export function ApiTable({
 
       if (!testResponse.ok) {
         console.error("Erreur lors de l'enregistrement du test:", await testResponse.text())
+        throw new Error("Erreur lors de l'enregistrement du test")
       }
 
-      setTestResult(result)
+      // Récupérer l'ID du test créé
+      const testData = await testResponse.json()
+      
+      // Afficher un message de succès
+      toast({
+        title: "Test terminé",
+        description: `Le test de l'API "${selectedApi.name}" a été effectué avec succès.`,
+      })
+
+      // Fermer la boîte de dialogue
+      setIsTestDialogOpen(false)
+      
+      // Rediriger vers la page d'historique des tests avec l'ID du test
+      router.push(`/tests?testId=${testData.id}`)
 
     } catch (error) {
       console.error('Erreur:', error)
@@ -320,11 +334,159 @@ export function ApiTable({
     setIsTestLoading(true)
     try {
       // Récupérer les variables de l'environnement
-      const response = await fetch(`/api/environments/${selectedEnvironment}/variables`)
-      if (!response.ok) {
+      const variablesResponse = await fetch(`/api/environments/${selectedEnvironment}/variables`)
+      if (!variablesResponse.ok) {
         throw new Error("Impossible de récupérer les variables")
       }
-      const variables = await response.json()
+      const variables = await variablesResponse.json()
+
+      // Récupérer l'authentification sélectionnée
+      const authResponse = await fetch(`/api/applications/${applicationId}/authentications/${selectedAuthentication}`)
+      if (!authResponse.ok) {
+        throw new Error("Impossible de récupérer l'authentification")
+      }
+      const auth = await authResponse.json()
+
+      // Récupérer les APIs sélectionnées
+      const selectedApisList = apis.filter(api => selectedApis.has(api.id))
+      
+      // Préparer les résultats
+      const results = []
+      let totalDuration = 0
+      let overallStatus = "SUCCESS"
+      
+      // Tester chaque API sélectionnée
+      for (const api of selectedApisList) {
+        try {
+          // Remplacer les variables dans l'URL
+          const url = replaceVariables(api.url, variables)
+
+          // Préparer les headers avec les variables remplacées et l'authentification
+          const headers: Record<string, string> = {
+            'apiKey': auth.apiKey,
+            'token': auth.token
+          }
+          
+          // Ajouter les headers personnalisés de l'API
+          if (api.headers) {
+            Object.entries(api.headers).forEach(([key, value]) => {
+              headers[key] = replaceVariables(value, variables)
+            })
+          }
+
+          // Préparer le body avec les variables remplacées si nécessaire
+          let body = undefined
+          if (api.body) {
+            if (typeof api.body === 'string') {
+              body = replaceVariables(api.body, variables)
+            } else {
+              // Si le body est un objet, on remplace les variables dans chaque valeur
+              body = JSON.stringify(
+                Object.entries(api.body).reduce((acc, [key, value]) => ({
+                  ...acc,
+                  [key]: typeof value === 'string' ? replaceVariables(value, variables) : value
+                }), {})
+              )
+            }
+          }
+
+          const startTime = Date.now()
+
+          // Effectuer l'appel API via notre proxy
+          const apiResponse = await fetch('/api/test', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              url,
+              method: api.method,
+              headers,
+              body
+            })
+          })
+
+          const duration = Date.now() - startTime
+          totalDuration += duration
+
+          const result = await apiResponse.json()
+          
+          // Ajouter le résultat
+          results.push({
+            apiId: api.id,
+            statusCode: result.status,
+            duration,
+            response: {
+              headers: result.headers,
+              data: result.data
+            },
+            error: result.status >= 400 ? result.statusText : null
+          })
+          
+          // Mettre à jour le statut global
+          if (result.status >= 400 && overallStatus === "SUCCESS") {
+            overallStatus = "PARTIAL"
+          }
+        } catch (error) {
+          console.error(`Erreur lors du test de l'API ${api.name}:`, error)
+          
+          // Ajouter un résultat d'erreur
+          results.push({
+            apiId: api.id,
+            statusCode: 500,
+            duration: 0,
+            response: {},
+            error: error instanceof Error ? error.message : "Une erreur est survenue"
+          })
+          
+          // Mettre à jour le statut global
+          if (overallStatus === "SUCCESS") {
+            overallStatus = "PARTIAL"
+          }
+        }
+      }
+      
+      // Si tous les tests ont échoué, le statut global est "FAILED"
+      if (results.every(result => result.statusCode >= 400)) {
+        overallStatus = "FAILED"
+      }
+      
+      // Enregistrer les résultats des tests
+      const testResponse = await fetch('/api/tests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          applicationId,
+          environmentId: selectedEnvironment,
+          authenticationId: selectedAuthentication,
+          duration: totalDuration,
+          status: overallStatus,
+          results
+        })
+      })
+
+      if (!testResponse.ok) {
+        console.error("Erreur lors de l'enregistrement des tests:", await testResponse.text())
+        throw new Error("Erreur lors de l'enregistrement des tests")
+      }
+
+      // Récupérer l'ID du test créé
+      const testData = await testResponse.json()
+      
+      // Afficher un message de succès
+      toast({
+        title: "Tests terminés",
+        description: `${results.length} API(s) ont été testées.`,
+      })
+
+      // Fermer la boîte de dialogue
+      setIsTestDialogOpen(false)
+      
+      // Rediriger vers la page d'historique des tests avec l'ID du test
+      router.push(`/tests?testId=${testData.id}`)
+      
     } catch (error) {
       console.error('Erreur:', error)
       toast({
@@ -334,7 +496,6 @@ export function ApiTable({
       })
     } finally {
       setIsTestLoading(false)
-      setIsTestDialogOpen(false)
     }
   }
 

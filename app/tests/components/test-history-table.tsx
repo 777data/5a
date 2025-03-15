@@ -18,8 +18,8 @@ import { Badge } from "@/components/ui/badge"
 import { formatDistanceToNow } from "date-fns"
 import { fr } from "date-fns/locale"
 import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useState, useEffect } from "react"
 
 type ApiTest = {
   id: string
@@ -53,7 +53,28 @@ type TestHistoryTableProps = {
 
 export function TestHistoryTable({ tests }: TestHistoryTableProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [expandedTest, setExpandedTest] = useState<string | null>(null)
+
+  // Vérifier si un testId est spécifié dans l'URL et déployer ce test
+  useEffect(() => {
+    const testId = searchParams.get('testId')
+    if (testId) {
+      setExpandedTest(testId)
+      
+      // Faire défiler jusqu'au test après un court délai pour laisser le temps au DOM de se mettre à jour
+      setTimeout(() => {
+        const testElement = document.getElementById(`test-${testId}`)
+        if (testElement) {
+          testElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      }, 100)
+      
+      // Nettoyer l'URL après avoir déployé le test
+      const newUrl = window.location.pathname
+      window.history.replaceState({}, '', newUrl)
+    }
+  }, [searchParams])
 
   const toggleExpand = (testId: string) => {
     setExpandedTest(expandedTest === testId ? null : testId)
@@ -75,7 +96,7 @@ export function TestHistoryTable({ tests }: TestHistoryTableProps) {
         <TableBody>
           {tests.map((test) => (
             <>
-              <TableRow key={test.id}>
+              <TableRow key={test.id} id={`test-${test.id}`}>
                 <TableCell className="px-4 py-3">
                   {new Date(test.startedAt).toLocaleDateString()} {new Date(test.startedAt).toLocaleTimeString()}
                   <div className="text-xs text-gray-500">
