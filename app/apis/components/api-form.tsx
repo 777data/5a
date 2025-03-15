@@ -14,6 +14,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
@@ -22,20 +23,32 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
+import { useState } from "react"
+import { X } from "lucide-react"
+
+const headerSchema = z.object({
+  key: z.string().min(1, "La clé est requise"),
+  value: z.string().min(1, "La valeur est requise"),
+})
 
 const formSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
   url: z.string().min(1, "L'URL est requise").url("L'URL n'est pas valide"),
   method: z.enum(["GET", "POST", "PUT", "DELETE", "PATCH"]),
+  headers: z.array(headerSchema).optional(),
+  body: z.string().optional(),
 })
 
 type FormData = z.infer<typeof formSchema>
+type HeaderData = z.infer<typeof headerSchema>
 
 type Api = {
   id: string
   name: string
   url: string
   method: string
+  headers: any
+  body: any
   createdAt: Date
 }
 
@@ -47,6 +60,7 @@ type ApiFormProps = {
 export function ApiForm({ api, applicationId }: ApiFormProps) {
   const router = useRouter()
   const { toast } = useToast()
+  const [newHeader, setNewHeader] = useState<HeaderData>({ key: '', value: '' })
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -54,11 +68,49 @@ export function ApiForm({ api, applicationId }: ApiFormProps) {
       name: api?.name ?? "",
       url: api?.url ?? "",
       method: (api?.method as "GET" | "POST" | "PUT" | "DELETE" | "PATCH") ?? "GET",
+      headers: api?.headers ? Object.entries(api.headers).map(([key, value]) => ({ key, value: value as string })) : [],
+      body: api?.body ? JSON.stringify(api.body, null, 2) : "",
     },
   })
 
+  const headers = form.watch('headers') || []
+
+  const addHeader = () => {
+    if (newHeader.key && newHeader.value) {
+      const currentHeaders = form.getValues('headers') || []
+      form.setValue('headers', [...currentHeaders, newHeader])
+      setNewHeader({ key: '', value: '' })
+    }
+  }
+
+  const removeHeader = (index: number) => {
+    const currentHeaders = form.getValues('headers') || []
+    form.setValue('headers', currentHeaders.filter((_, i) => i !== index))
+  }
+
   async function onSubmit(data: FormData) {
     try {
+      // Convertir les headers en objet
+      const headersObject = data.headers?.reduce((acc, { key, value }) => ({
+        ...acc,
+        [key]: value
+      }), {})
+
+      // Convertir le body en JSON si présent
+      let bodyObject = undefined
+      if (data.body) {
+        try {
+          bodyObject = JSON.parse(data.body)
+        } catch (e) {
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Le body n'est pas un JSON valide",
+          })
+          return
+        }
+      }
+
       const response = await fetch(
         api
           ? `/api/applications/${applicationId}/apis/${api.id}`
@@ -68,7 +120,11 @@ export function ApiForm({ api, applicationId }: ApiFormProps) {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(data),
+          body: JSON.stringify({
+            ...data,
+            headers: headersObject,
+            body: bodyObject,
+          }),
         }
       )
 
@@ -147,6 +203,68 @@ export function ApiForm({ api, applicationId }: ApiFormProps) {
                   <SelectItem value="PATCH">PATCH</SelectItem>
                 </SelectContent>
               </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="space-y-4">
+          <FormLabel>Headers</FormLabel>
+          <div className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
+            <Input
+              placeholder="Clé"
+              value={newHeader.key}
+              onChange={(e) => setNewHeader(prev => ({ ...prev, key: e.target.value }))}
+            />
+            <Input
+              placeholder="Valeur"
+              value={newHeader.value}
+              onChange={(e) => setNewHeader(prev => ({ ...prev, value: e.target.value }))}
+            />
+            <Button
+              type="button"
+              onClick={addHeader}
+              disabled={!newHeader.key || !newHeader.value}
+            >
+              Ajouter
+            </Button>
+          </div>
+          
+          {headers.length > 0 && (
+            <div className="border rounded-md p-4 space-y-2">
+              {headers.map((header, index) => (
+                <div key={index} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-center">
+                  <div className="text-sm font-medium">{header.key}</div>
+                  <div className="text-sm text-gray-500">{header.value}</div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => removeHeader(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <FormField
+          control={form.control}
+          name="body"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Body (JSON)</FormLabel>
+              <FormControl>
+                <Textarea
+                  {...field}
+                  className="font-mono"
+                  rows={10}
+                  placeholder="{}"
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

@@ -6,6 +6,8 @@ const apiSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
   url: z.string().min(1, "L'URL est requise").url("L'URL n'est pas valide"),
   method: z.enum(["GET", "POST", "PUT", "DELETE", "PATCH"]),
+  headers: z.record(z.string()).optional(),
+  body: z.any().optional(),
 })
 
 export async function POST(
