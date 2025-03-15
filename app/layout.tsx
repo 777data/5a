@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { ApplicationSelector } from "@/components/application-selector";
+import Image from "next/image";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -38,9 +39,17 @@ export default async function RootLayout({
         <div className="flex h-screen">
           {/* Sidebar */}
           <aside className="w-64 border-r bg-white">
-            <div className="flex h-16 items-center border-b px-6">
-              <Link href="/" className="text-xl font-bold">
-                API Tester
+            <div className="flex h-16 items-center justify-center">
+              <Link href="/" className="flex flex-col items-center">
+                <div className="flex flex-col items-center">
+                  <Image 
+                    src="/AAAAA.jpeg" 
+                    alt="AAAAA" 
+                    width={80} 
+                    height={40} 
+                    priority
+                  />
+                </div>
               </Link>
             </div>
             <nav className="flex flex-col gap-1 p-4">
