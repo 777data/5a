@@ -249,6 +249,8 @@ export function ApiTable({
         body
       })
 
+      const startTime = Date.now()
+
       // Effectuer l'appel API via notre proxy
       const apiResponse = await fetch('/api/test', {
         method: 'POST',
@@ -263,11 +265,43 @@ export function ApiTable({
         })
       })
 
+      const duration = Date.now() - startTime
+
       if (!apiResponse.ok) {
         throw new Error("Erreur lors de l'appel à l'API")
       }
 
       const result = await apiResponse.json()
+
+      // Enregistrer le résultat du test
+      const testResponse = await fetch('/api/tests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          applicationId,
+          environmentId: selectedEnvironment,
+          authenticationId: selectedAuthentication,
+          duration,
+          status: result.status < 400 ? "SUCCESS" : "FAILED",
+          results: [{
+            apiId: apiId,
+            statusCode: result.status,
+            duration,
+            response: {
+              headers: result.headers,
+              data: result.data
+            },
+            error: result.status >= 400 ? result.statusText : null
+          }]
+        })
+      })
+
+      if (!testResponse.ok) {
+        console.error("Erreur lors de l'enregistrement du test:", await testResponse.text())
+      }
+
       setTestResult(result)
 
     } catch (error) {

@@ -8,53 +8,52 @@ datasource db {
 }
 
 model Application {
-  id           String        @id @default(uuid())
-  name         String        @unique
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  environments Environment[]
+  id            String          @id @default(cuid())
+  name          String
+  environments  Environment[]
+  apis          Api[]
   authentications Authentication[]
-  apis         Api[]
+  apiTests      ApiTest[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Api {
-  id        String   @id @default(uuid())
-  name      String
-  url       String
-  method    String
-  headers   Json?
-  body      Json?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  application   Application @relation(fields: [applicationId], references: [id])
+  id            String          @id @default(cuid())
+  name          String
+  url           String
+  method        String         // "GET" | "POST" | "PUT" | "DELETE" | "PATCH"
+  headers       Json?
+  body          Json?
+  application   Application     @relation(fields: [applicationId], references: [id])
   applicationId String
-
-  @@index([applicationId])
+  testResults   ApiTestResult[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Authentication {
-  id            String      @id @default(uuid())
-  name          String      @unique
-  token         String
-  apiKey        String
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  application   Application @relation(fields: [applicationId], references: [id])
+  id            String          @id @default(cuid())
+  name          String
+  type          String?         // "API_KEY" | "BEARER_TOKEN"
+  apiKey        String?
+  token         String?
+  application   Application     @relation(fields: [applicationId], references: [id])
   applicationId String
-
-  @@index([applicationId])
+  apiTests      ApiTest[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Environment {
-  id             String          @id @default(uuid())
-  name           String
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  id            String          @id @default(cuid())
+  name          String
+  application   Application     @relation(fields: [applicationId], references: [id])
+  applicationId String
   variableValues VariableValue[]
-  application    Application     @relation(fields: [applicationId], references: [id])
-  applicationId  String
-
-  @@index([applicationId])
+  apiTests      ApiTest[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model VariableValue {
@@ -68,4 +67,34 @@ model VariableValue {
 
   @@unique([name, environmentId])
   @@index([environmentId])
+}
+
+model ApiTest {
+  id              String          @id @default(cuid())
+  startedAt       DateTime        @default(now())
+  duration        Int             // en millisecondes
+  status          String          // "SUCCESS" | "PARTIAL" | "FAILED"
+  application     Application     @relation(fields: [applicationId], references: [id])
+  applicationId   String
+  environment     Environment     @relation(fields: [environmentId], references: [id])
+  environmentId   String
+  authentication  Authentication? @relation(fields: [authenticationId], references: [id])
+  authenticationId String?
+  results         ApiTestResult[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model ApiTestResult {
+  id            String          @id @default(cuid())
+  statusCode    Int
+  duration      Int             // en millisecondes
+  response      Json
+  error         String?
+  apiTest       ApiTest         @relation(fields: [apiTestId], references: [id])
+  apiTestId     String
+  api           Api             @relation(fields: [apiId], references: [id])
+  apiId         String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 }
