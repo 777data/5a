@@ -7,6 +7,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { ApplicationSelector } from "@/components/application-selector";
 import Image from "next/image";
+import { Select, SelectItem } from "@/components/ui/select";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -54,7 +55,7 @@ export default async function RootLayout({
             </div>
             <nav className="flex flex-col gap-1 p-4">
               <Link
-                href="/apis"
+                href="/collections"
                 className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-colors hover:text-gray-900 hover:bg-gray-100"
               >
                 <svg
@@ -67,10 +68,10 @@ export default async function RootLayout({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
                   />
                 </svg>
-                APIs
+                Collections
               </Link>
               <Link
                 href="/environments"

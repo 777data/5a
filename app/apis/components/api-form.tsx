@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { X } from "lucide-react"
 
 const headerSchema = z.object({
@@ -37,6 +37,7 @@ const formSchema = z.object({
   method: z.enum(["GET", "POST", "PUT", "DELETE", "PATCH"]),
   headers: z.array(headerSchema).optional(),
   body: z.string().optional(),
+  collectionId: z.string().optional(),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -49,18 +50,48 @@ type Api = {
   method: string
   headers: any
   body: any
+  collectionId?: string | null
   createdAt: Date
+}
+
+type Collection = {
+  id: string
+  name: string
 }
 
 type ApiFormProps = {
   api: Api | null
   applicationId: string
+  initialCollectionId?: string
 }
 
-export function ApiForm({ api, applicationId }: ApiFormProps) {
+export function ApiForm({ api, applicationId, initialCollectionId }: ApiFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [newHeader, setNewHeader] = useState<HeaderData>({ key: '', value: '' })
+  const [collections, setCollections] = useState<Collection[]>([])
+  const [isLoadingCollections, setIsLoadingCollections] = useState(false)
+
+  useEffect(() => {
+    const fetchCollections = async () => {
+      setIsLoadingCollections(true)
+      try {
+        const response = await fetch(`/api/applications/${applicationId}/collections`)
+        if (response.ok) {
+          const data = await response.json()
+          setCollections(data)
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des collections:', error)
+      } finally {
+        setIsLoadingCollections(false)
+      }
+    }
+
+    if (applicationId) {
+      fetchCollections()
+    }
+  }, [applicationId])
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -70,6 +101,7 @@ export function ApiForm({ api, applicationId }: ApiFormProps) {
       method: (api?.method as "GET" | "POST" | "PUT" | "DELETE" | "PATCH") ?? "GET",
       headers: api?.headers ? Object.entries(api.headers).map(([key, value]) => ({ key, value: value as string })) : [],
       body: api?.body ? JSON.stringify(api.body, null, 2) : "",
+      collectionId: api?.collectionId || initialCollectionId || "none",
     },
   })
 
@@ -126,6 +158,7 @@ export function ApiForm({ api, applicationId }: ApiFormProps) {
             ...data,
             headers: headersObject,
             body: bodyObject,
+            collectionId: data.collectionId === "none" ? null : data.collectionId,
           }),
         }
       )
@@ -142,7 +175,12 @@ export function ApiForm({ api, applicationId }: ApiFormProps) {
           : `L'API "${data.name}" a été créée avec succès.`,
       })
 
-      router.push("/apis")
+      // Rediriger vers la collection si l'API a été créée depuis une collection
+      if (initialCollectionId && data.collectionId === initialCollectionId) {
+        router.push(`/collections/${initialCollectionId}/view`)
+      } else {
+        router.push("/apis")
+      }
       router.refresh()
     } catch (error) {
       console.error("Erreur:", error)
@@ -209,6 +247,36 @@ export function ApiForm({ api, applicationId }: ApiFormProps) {
                   <SelectItem value="PUT">PUT</SelectItem>
                   <SelectItem value="DELETE">DELETE</SelectItem>
                   <SelectItem value="PATCH">PATCH</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="collectionId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Collection (optionnel)</FormLabel>
+              <Select
+                value={field.value}
+                onValueChange={field.onChange}
+                disabled={isLoadingCollections}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner une collection" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="none">Aucune collection</SelectItem>
+                  {collections.map((collection) => (
+                    <SelectItem key={collection.id} value={collection.id}>
+                      {collection.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <FormMessage />

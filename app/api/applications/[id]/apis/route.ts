@@ -8,6 +8,7 @@ const apiSchema = z.object({
   method: z.enum(["GET", "POST", "PUT", "DELETE", "PATCH"]),
   headers: z.record(z.string()).optional(),
   body: z.any().optional(),
+  collectionId: z.string().nullable().optional(),
 })
 
 export async function POST(
@@ -30,11 +31,33 @@ export async function POST(
       )
     }
 
+    // Si collectionId est fourni, vérifier si la collection existe et appartient à l'application
+    if (body.collectionId) {
+      const collection = await prisma.collection.findFirst({
+        where: {
+          id: body.collectionId,
+          applicationId: params.id,
+        },
+      })
+
+      if (!collection) {
+        return NextResponse.json(
+          { error: "Collection introuvable ou n'appartient pas à cette application" },
+          { status: 404 }
+        )
+      }
+    }
+
     // Créer l'API
     const api = await prisma.api.create({
       data: {
-        ...body,
+        name: body.name,
+        url: body.url,
+        method: body.method,
+        headers: body.headers,
+        body: body.body,
         applicationId: params.id,
+        collectionId: body.collectionId || null,
       },
     })
 

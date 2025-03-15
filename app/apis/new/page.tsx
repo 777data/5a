@@ -1,9 +1,11 @@
 import { cookies } from "next/headers"
 import { ApiForm } from "../components/api-form"
+import { redirect } from "next/navigation"
 
-export default async function NewApiPage() {
+export default async function NewApiPage({ searchParams }: { searchParams: { collectionId?: string } }) {
   const cookieStore = await cookies()
   const activeApplicationId = cookieStore.get('activeApplicationId')?.value
+  const collectionId = searchParams.collectionId
 
   if (!activeApplicationId) {
     return (
@@ -24,11 +26,16 @@ export default async function NewApiPage() {
         <h1 className="text-2xl font-bold">Nouvelle API</h1>
         <p className="text-sm text-gray-500 mt-1">
           Créez une nouvelle API pour votre application
+          {collectionId && <span> dans la collection sélectionnée</span>}
         </p>
       </div>
 
       <div className="max-w-2xl">
-        <ApiForm api={null} applicationId={activeApplicationId} />
+        <ApiForm 
+          api={null} 
+          applicationId={activeApplicationId} 
+          initialCollectionId={collectionId}
+        />
       </div>
     </div>
   )
