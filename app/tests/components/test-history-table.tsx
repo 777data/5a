@@ -19,7 +19,7 @@ import { formatDistanceToNow } from "date-fns"
 import { fr } from "date-fns/locale"
 import { Button } from "@/components/ui/button"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState, useEffect, Fragment } from "react"
 
 type ApiTest = {
   id: string
@@ -95,8 +95,8 @@ export function TestHistoryTable({ tests }: TestHistoryTableProps) {
         </TableHeader>
         <TableBody>
           {tests.map((test) => (
-            <>
-              <TableRow key={test.id} id={`test-${test.id}`}>
+            <Fragment key={test.id}>
+              <TableRow id={`test-${test.id}`}>
                 <TableCell className="px-4 py-3">
                   {new Date(test.startedAt).toLocaleDateString()} {new Date(test.startedAt).toLocaleTimeString()}
                   <div className="text-xs text-gray-500">
@@ -197,7 +197,7 @@ export function TestHistoryTable({ tests }: TestHistoryTableProps) {
                   </TableCell>
                 </TableRow>
               )}
-            </>
+            </Fragment>
           ))}
           {tests.length === 0 && (
             <TableRow>

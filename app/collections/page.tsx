@@ -38,6 +38,18 @@ export default async function CollectionsPage() {
           },
         },
       },
+      environments: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      authentications: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   })
 
@@ -62,7 +74,12 @@ export default async function CollectionsPage() {
         </Button>
       </div>
 
-      <CollectionTable collections={application.collections} />
+      <CollectionTable 
+        collections={application.collections} 
+        environments={application.environments}
+        authentications={application.authentications}
+        applicationId={application.id}
+      />
     </div>
   )
 } 
