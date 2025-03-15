@@ -74,6 +74,8 @@ export function ApiForm({ api, applicationId }: ApiFormProps) {
   })
 
   const headers = form.watch('headers') || []
+  const method = form.watch('method')
+  const showBody = method === 'POST' || method === 'PUT'
 
   const addHeader = () => {
     if (newHeader.key && newHeader.value) {
@@ -189,7 +191,13 @@ export function ApiForm({ api, applicationId }: ApiFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Méthode</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={(value) => {
+                field.onChange(value)
+                // Réinitialiser le body si on passe à une méthode qui ne l'utilise pas
+                if (value !== 'POST' && value !== 'PUT') {
+                  form.setValue('body', '')
+                }
+              }} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionnez une méthode" />
@@ -251,24 +259,26 @@ export function ApiForm({ api, applicationId }: ApiFormProps) {
           )}
         </div>
 
-        <FormField
-          control={form.control}
-          name="body"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Body (JSON)</FormLabel>
-              <FormControl>
-                <Textarea
-                  {...field}
-                  className="font-mono"
-                  rows={10}
-                  placeholder="{}"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {showBody && (
+          <FormField
+            control={form.control}
+            name="body"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Body (JSON)</FormLabel>
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    className="font-mono"
+                    rows={10}
+                    placeholder="{}"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <div className="flex gap-4">
           <Button type="submit">
