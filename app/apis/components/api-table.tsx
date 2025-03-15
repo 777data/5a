@@ -11,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,12 +23,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
+import { Edit, Play, Trash2 } from "lucide-react"
 
 type Api = {
   id: string
   name: string
   url: string
   method: string
+  headers: Record<string, string>
+  body: any
   createdAt: Date
 }
 
@@ -41,6 +45,7 @@ export function ApiTable({ apis, applicationId }: ApiTableProps) {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [apiToDelete, setApiToDelete] = useState<Api | null>(null)
+  const [selectedApis, setSelectedApis] = useState<Set<string>>(new Set())
 
   async function deleteApi(api: Api) {
     setIsLoading(true)
@@ -73,22 +78,71 @@ export function ApiTable({ apis, applicationId }: ApiTableProps) {
     }
   }
 
+  function toggleApiSelection(apiId: string) {
+    const newSelectedApis = new Set(selectedApis)
+    if (newSelectedApis.has(apiId)) {
+      newSelectedApis.delete(apiId)
+    } else {
+      newSelectedApis.add(apiId)
+    }
+    setSelectedApis(newSelectedApis)
+  }
+
+  function toggleAllApis() {
+    if (selectedApis.size === apis.length) {
+      setSelectedApis(new Set())
+    } else {
+      setSelectedApis(new Set(apis.map(api => api.id)))
+    }
+  }
+
   return (
     <>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold">APIs</h2>
+        <div className="flex gap-2">
+          {selectedApis.size > 0 && (
+            <Button
+              variant="outline"
+              className="gap-2"
+              disabled={isLoading}
+            >
+              <Play className="h-4 w-4" />
+              Tester la sélection
+            </Button>
+          )}
+          <Button onClick={() => router.push('/apis/new')}>
+            Ajouter
+          </Button>
+        </div>
+      </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[50px]">
+                <Checkbox
+                  checked={selectedApis.size === apis.length && apis.length > 0}
+                  onCheckedChange={toggleAllApis}
+                />
+              </TableHead>
               <TableHead>Nom</TableHead>
               <TableHead>URL</TableHead>
               <TableHead>Méthode</TableHead>
               <TableHead>Date de création</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
+              <TableHead className="w-[140px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {apis.map((api) => (
               <TableRow key={api.id}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedApis.has(api.id)}
+                    onCheckedChange={() => toggleApiSelection(api.id)}
+                  />
+                </TableCell>
                 <TableCell className="font-medium">{api.name}</TableCell>
                 <TableCell>{api.url}</TableCell>
                 <TableCell>
@@ -109,22 +163,19 @@ export function ApiTable({ apis, applicationId }: ApiTableProps) {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
+                      title="Tester"
+                      disabled={isLoading}
+                    >
+                      <Play className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
                       title="Éditer"
                       onClick={() => router.push(`/apis/${api.id}`)}
                     >
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        />
-                      </svg>
+                      <Edit className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
@@ -133,19 +184,7 @@ export function ApiTable({ apis, applicationId }: ApiTableProps) {
                       title="Supprimer"
                       onClick={() => setApiToDelete(api)}
                     >
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </TableCell>
@@ -153,7 +192,7 @@ export function ApiTable({ apis, applicationId }: ApiTableProps) {
             ))}
             {apis.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-6 text-gray-500">
+                <TableCell colSpan={6} className="text-center py-6 text-gray-500">
                   Aucune API n'a été créée
                 </TableCell>
               </TableRow>
