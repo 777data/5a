@@ -103,7 +103,7 @@ export function VariableForm({ environmentId, variableValue }: VariableFormProps
             <FormItem>
               <FormLabel>Nom de la variable</FormLabel>
               <FormControl>
-                <Input {...field} disabled={!!variableValue} />
+                <Input {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

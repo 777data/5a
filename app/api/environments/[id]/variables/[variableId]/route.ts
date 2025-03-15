@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 
 const updateVariableValueSchema = z.object({
+  name: z.string().min(1),
   value: z.string().min(1),
 })
 
@@ -21,6 +22,9 @@ export async function PUT(
         id: variableId,
         environmentId: environmentId,
       },
+      include: {
+        variable: true,
+      },
     })
 
     if (!existingValue) {
@@ -28,6 +32,33 @@ export async function PUT(
         { error: "Variable non trouvée" },
         { status: 404 }
       )
+    }
+
+    // Vérifier si le nouveau nom est déjà utilisé par une autre variable
+    if (body.name !== existingValue.variable.name) {
+      const existingVariable = await prisma.variable.findFirst({
+        where: {
+          name: body.name,
+          id: { not: existingValue.variable.id },
+        },
+      })
+
+      if (existingVariable) {
+        return NextResponse.json(
+          { error: "Une variable avec ce nom existe déjà" },
+          { status: 400 }
+        )
+      }
+
+      // Mettre à jour le nom de la variable
+      await prisma.variable.update({
+        where: {
+          id: existingValue.variable.id,
+        },
+        data: {
+          name: body.name,
+        },
+      })
     }
 
     // Mettre à jour la valeur
