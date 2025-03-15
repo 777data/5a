@@ -1,13 +1,10 @@
 import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
-import Link from "next/link"
 import { prisma } from "@/lib/prisma"
-import { ApiTable } from "./components/api-table"
+import { ApisClient } from "./components/apis-client"
 
 export default async function ApisPage() {
-  const cookieStore = await cookies()
+  const cookieStore = cookies()
   const activeApplicationId = cookieStore.get('activeApplicationId')?.value
 
   if (!activeApplicationId) {
@@ -31,6 +28,18 @@ export default async function ApisPage() {
           createdAt: 'desc',
         },
       },
+      environments: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      authentications: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   })
 
@@ -39,23 +48,12 @@ export default async function ApisPage() {
   }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">APIs</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Application : {application.name}
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/apis/new">
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter
-          </Link>
-        </Button>
-      </div>
-
-      <ApiTable apis={application.apis} applicationId={application.id} />
-    </div>
+    <ApisClient
+      applicationName={application.name}
+      apis={application.apis}
+      applicationId={application.id}
+      environments={application.environments}
+      authentications={application.authentications}
+    />
   )
 } 

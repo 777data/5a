@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import {
   Table,
@@ -22,6 +22,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { Edit, Play, Trash2 } from "lucide-react"
 
@@ -35,17 +49,60 @@ type Api = {
   createdAt: Date
 }
 
+type Environment = {
+  id: string
+  name: string
+}
+
+type Authentication = {
+  id: string
+  name: string
+}
+
 type ApiTableProps = {
   apis: Api[]
   applicationId: string
+  environments?: Environment[]
+  authentications?: Authentication[]
+  onTestSelected?: (selectedIds: string[]) => void
 }
 
-export function ApiTable({ apis, applicationId }: ApiTableProps) {
+const STORAGE_KEY = 'api-test-preferences'
+
+export function ApiTable({ 
+  apis, 
+  applicationId, 
+  environments = [], 
+  authentications = [],
+  onTestSelected
+}: ApiTableProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [apiToDelete, setApiToDelete] = useState<Api | null>(null)
   const [selectedApis, setSelectedApis] = useState<Set<string>>(new Set())
+  const [isTestDialogOpen, setIsTestDialogOpen] = useState(false)
+  const [apiToTest, setApiToTest] = useState<Api | null>(null)
+  const [selectedEnvironment, setSelectedEnvironment] = useState<string>('')
+  const [selectedAuthentication, setSelectedAuthentication] = useState<string>('')
+
+  // Charger les préférences depuis le localStorage
+  useEffect(() => {
+    const preferences = localStorage.getItem(STORAGE_KEY)
+    if (preferences) {
+      const { environmentId, authenticationId } = JSON.parse(preferences)
+      setSelectedEnvironment(environmentId || '')
+      setSelectedAuthentication(authenticationId || '')
+    }
+  }, [])
+
+  // Sauvegarder les préférences dans le localStorage
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      environmentId: selectedEnvironment,
+      authenticationId: selectedAuthentication,
+    }))
+  }, [selectedEnvironment, selectedAuthentication])
 
   async function deleteApi(api: Api) {
     setIsLoading(true)
@@ -96,25 +153,34 @@ export function ApiTable({ apis, applicationId }: ApiTableProps) {
     }
   }
 
+  function openTestDialog(api?: Api) {
+    if (api) {
+      setApiToTest(api)
+    } else {
+      setApiToTest(null)
+    }
+    setIsTestDialogOpen(true)
+  }
+
+  function handleTest() {
+    // La logique de test sera implémentée plus tard
+    setIsTestDialogOpen(false)
+  }
+
   return (
     <>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">APIs</h2>
-        <div className="flex gap-2">
-          {selectedApis.size > 0 && (
-            <Button
-              variant="outline"
-              className="gap-2"
-              disabled={isLoading}
-            >
-              <Play className="h-4 w-4" />
-              Tester la sélection
-            </Button>
-          )}
-          <Button onClick={() => router.push('/apis/new')}>
-            Ajouter
+        {selectedApis.size > 0 && (
+          <Button
+            variant="outline"
+            className="gap-2"
+            disabled={isLoading}
+            onClick={() => openTestDialog()}
+          >
+            <Play className="h-4 w-4" />
+            Tester la sélection
           </Button>
-        </div>
+        )}
       </div>
 
       <div className="rounded-md border">
@@ -165,6 +231,7 @@ export function ApiTable({ apis, applicationId }: ApiTableProps) {
                       className="h-8 w-8"
                       title="Tester"
                       disabled={isLoading}
+                      onClick={() => openTestDialog(api)}
                     >
                       <Play className="h-4 w-4" />
                     </Button>
@@ -221,6 +288,59 @@ export function ApiTable({ apis, applicationId }: ApiTableProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={isTestDialogOpen} onOpenChange={setIsTestDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {apiToTest ? `Tester ${apiToTest.name}` : `Tester ${selectedApis.size} APIs`}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Environnement</label>
+              <Select value={selectedEnvironment} onValueChange={setSelectedEnvironment}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un environnement" />
+                </SelectTrigger>
+                <SelectContent>
+                  {environments.map((env) => (
+                    <SelectItem key={env.id} value={env.id}>
+                      {env.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Authentification</label>
+              <Select value={selectedAuthentication} onValueChange={setSelectedAuthentication}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner une authentification" />
+                </SelectTrigger>
+                <SelectContent>
+                  {authentications.map((auth) => (
+                    <SelectItem key={auth.id} value={auth.id}>
+                      {auth.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsTestDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleTest}>
+              Tester
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 } 
