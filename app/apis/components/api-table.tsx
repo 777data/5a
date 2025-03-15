@@ -190,21 +190,7 @@ export function ApiTable({
       if (!selectedApi) {
         throw new Error("API non trouvée")
       }
-      
-      // Log des informations détaillées de l'API
-      console.log('Test unique API:', {
-        api: {
-          id: selectedApi.id,
-          name: selectedApi.name,
-          url: selectedApi.url,
-          method: selectedApi.method,
-          headers: selectedApi.headers,
-          body: selectedApi.body
-        },
-        applicationId,
-        selectedEnvironment,
-        selectedAuthentication,
-      })
+
 
       // Récupérer les variables de l'environnement
       const response = await fetch(`/api/environments/${selectedEnvironment}/variables`)
@@ -212,15 +198,63 @@ export function ApiTable({
         throw new Error("Impossible de récupérer les variables")
       }
       const variables = await response.json()
-      
-      // Log des variables trouvées
-      console.log('Variables trouvées:', variables)
 
       // Remplacer les variables dans l'URL
       const url = replaceVariables(selectedApi.url, variables)
 
-      // Log de l'URL après remplacement des variables
-      console.log('URL avec variables remplacées:', url)
+      // Préparer les headers avec les variables remplacées
+      const headers: Record<string, string> = {}
+      if (selectedApi.headers) {
+        Object.entries(selectedApi.headers).forEach(([key, value]) => {
+          headers[key] = replaceVariables(value, variables)
+        })
+      }
+
+      // Préparer le body avec les variables remplacées si nécessaire
+      let body = undefined
+      if (selectedApi.body) {
+        if (typeof selectedApi.body === 'string') {
+          body = replaceVariables(selectedApi.body, variables)
+        } else {
+          // Si le body est un objet, on remplace les variables dans chaque valeur
+          body = JSON.stringify(
+            Object.entries(selectedApi.body).reduce((acc, [key, value]) => ({
+              ...acc,
+              [key]: typeof value === 'string' ? replaceVariables(value, variables) : value
+            }), {})
+          )
+        }
+      }
+
+      // Effectuer l'appel API
+      const apiResponse = await fetch(url, {
+        method: selectedApi.method,
+        headers,
+        body,
+      })
+
+      // Préparer les headers de la réponse
+      const responseHeaders: Record<string, string> = {}
+      apiResponse.headers.forEach((value, key) => {
+        responseHeaders[key] = value
+      })
+
+      // Déterminer le type de contenu de la réponse
+      const contentType = apiResponse.headers.get('content-type')
+      let data
+      if (contentType?.includes('application/json')) {
+        data = await apiResponse.json()
+      } else {
+        data = await apiResponse.text()
+      }
+
+      // Mettre à jour le résultat du test
+      setTestResult({
+        status: apiResponse.status,
+        statusText: apiResponse.statusText,
+        headers: responseHeaders,
+        data
+      })
 
     } catch (error) {
       console.error('Erreur:', error)
@@ -237,23 +271,12 @@ export function ApiTable({
   async function testSelectedApis() {
     setIsTestLoading(true)
     try {
-      // Log des IDs sélectionnés
-      console.log('Test multiple APIs:', {
-        selectedApis: Array.from(selectedApis),
-        applicationId,
-        selectedEnvironment,
-        selectedAuthentication,
-      })
-
       // Récupérer les variables de l'environnement
       const response = await fetch(`/api/environments/${selectedEnvironment}/variables`)
       if (!response.ok) {
         throw new Error("Impossible de récupérer les variables")
       }
       const variables = await response.json()
-      
-      // Log des variables trouvées
-      console.log('Variables trouvées:', variables)
     } catch (error) {
       console.error('Erreur:', error)
       toast({
