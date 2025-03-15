@@ -191,19 +191,30 @@ export function ApiTable({
         throw new Error("API non trouvée")
       }
 
-
       // Récupérer les variables de l'environnement
-      const response = await fetch(`/api/environments/${selectedEnvironment}/variables`)
-      if (!response.ok) {
+      const variablesResponse = await fetch(`/api/environments/${selectedEnvironment}/variables`)
+      if (!variablesResponse.ok) {
         throw new Error("Impossible de récupérer les variables")
       }
-      const variables = await response.json()
+      const variables = await variablesResponse.json()
+
+      // Récupérer l'authentification sélectionnée
+      const authResponse = await fetch(`/api/applications/${applicationId}/authentications/${selectedAuthentication}`)
+      if (!authResponse.ok) {
+        throw new Error("Impossible de récupérer l'authentification")
+      }
+      const auth = await authResponse.json()
 
       // Remplacer les variables dans l'URL
       const url = replaceVariables(selectedApi.url, variables)
 
-      // Préparer les headers avec les variables remplacées
-      const headers: Record<string, string> = {}
+      // Préparer les headers avec les variables remplacées et l'authentification
+      const headers: Record<string, string> = {
+        'apiKey': auth.apiKey,
+        'token': auth.token
+      }
+      
+      // Ajouter les headers personnalisés de l'API
       if (selectedApi.headers) {
         Object.entries(selectedApi.headers).forEach(([key, value]) => {
           headers[key] = replaceVariables(value, variables)
@@ -225,6 +236,16 @@ export function ApiTable({
           )
         }
       }
+
+      // Log de la requête finale (en masquant les valeurs sensibles)
+      console.log('Requête finale:', {
+        url,
+        method: selectedApi.method,
+        headers: {
+          ...headers
+        },
+        body
+      })
 
       // Effectuer l'appel API
       const apiResponse = await fetch(url, {

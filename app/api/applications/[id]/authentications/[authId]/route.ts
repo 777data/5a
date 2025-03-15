@@ -8,6 +8,38 @@ const updateAuthenticationSchema = z.object({
   apiKey: z.string().min(1),
 })
 
+export async function GET(
+  request: Request,
+  { params }: { params: { id: string; authId: string } }
+) {
+  try {
+    const { id: applicationId, authId } = params
+
+    // Vérifier si l'authentification existe
+    const authentication = await prisma.authentication.findUnique({
+      where: {
+        id: authId,
+        applicationId: applicationId,
+      },
+    })
+
+    if (!authentication) {
+      return NextResponse.json(
+        { error: "Authentification non trouvée" },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json(authentication)
+  } catch (error) {
+    console.error('[GET_AUTHENTICATION]', error)
+    return NextResponse.json(
+      { error: "Une erreur est survenue lors de la récupération de l'authentification" },
+      { status: 500 }
+    )
+  }
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: { id: string; authId: string } }
