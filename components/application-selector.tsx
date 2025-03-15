@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/select"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
+import { useEffect } from "react"
 
 type Application = {
   id: string
@@ -20,9 +21,27 @@ type ApplicationSelectorProps = {
   selectedApplicationId?: string | null
 }
 
-export function ApplicationSelector({ applications, selectedApplicationId }: ApplicationSelectorProps) {
+const LOCAL_STORAGE_KEY = 'selectedApplicationId'
+
+export function ApplicationSelector({ applications, selectedApplicationId: initialSelectedApplicationId }: ApplicationSelectorProps) {
   const router = useRouter()
   const { toast } = useToast()
+
+  // Effet pour charger l'application depuis le localStorage au démarrage
+  useEffect(() => {
+    if (!initialSelectedApplicationId && applications.length > 0) {
+      const savedApplicationId = localStorage.getItem(LOCAL_STORAGE_KEY)
+      if (savedApplicationId && applications.some(app => app.id === savedApplicationId)) {
+        handleApplicationChange(savedApplicationId)
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Sélection requise",
+          description: "Veuillez sélectionner une application pour continuer.",
+        })
+      }
+    }
+  }, [])
 
   const handleApplicationChange = async (applicationId: string) => {
     try {
@@ -37,6 +56,9 @@ export function ApplicationSelector({ applications, selectedApplicationId }: App
       if (!response.ok) {
         throw new Error('Erreur lors de la mise à jour de l\'application active')
       }
+
+      // Sauvegarder dans le localStorage
+      localStorage.setItem(LOCAL_STORAGE_KEY, applicationId)
 
       const application = applications.find(app => app.id === applicationId)
       toast({
@@ -55,9 +77,20 @@ export function ApplicationSelector({ applications, selectedApplicationId }: App
     }
   }
 
+  // Si aucune application n'est sélectionnée, afficher un message d'erreur
+  useEffect(() => {
+    if (!initialSelectedApplicationId && applications.length > 0) {
+      toast({
+        variant: "destructive",
+        title: "Sélection requise",
+        description: "Veuillez sélectionner une application pour continuer.",
+      })
+    }
+  }, [initialSelectedApplicationId, applications.length])
+
   return (
     <Select
-      value={selectedApplicationId || undefined}
+      value={initialSelectedApplicationId || undefined}
       onValueChange={handleApplicationChange}
     >
       <SelectTrigger className="w-[200px]">
