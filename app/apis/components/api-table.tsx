@@ -67,6 +67,13 @@ type ApiTableProps = {
   onTestSelected?: (selectedIds: string[]) => void
 }
 
+type TestResult = {
+  status: number
+  statusText: string
+  headers: Record<string, string>
+  data: any
+}
+
 const STORAGE_KEY = 'api-test-preferences'
 
 export function ApiTable({ 
@@ -85,6 +92,8 @@ export function ApiTable({
   const [apiToTest, setApiToTest] = useState<Api | null>(null)
   const [selectedEnvironment, setSelectedEnvironment] = useState<string>('')
   const [selectedAuthentication, setSelectedAuthentication] = useState<string>('')
+  const [isTestLoading, setIsTestLoading] = useState(false)
+  const [testResult, setTestResult] = useState<TestResult | null>(null)
 
   // Charger les préférences depuis le localStorage
   useEffect(() => {
@@ -162,9 +171,53 @@ export function ApiTable({
     setIsTestDialogOpen(true)
   }
 
+  async function testApi(apiId: string) {
+    setIsTestLoading(true)
+    try {
+      console.log({
+        applicationId,
+        selectedEnvironment,
+        selectedAuthentication,
+      })
+    } catch (error) {
+      console.error('Erreur:', error)
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors du test",
+      })
+    } finally {
+      setIsTestLoading(false)
+    }
+  }
+
+  async function testSelectedApis() {
+    setIsTestLoading(true)
+    try {
+      console.log({
+        applicationId,
+        selectedEnvironment,
+        selectedAuthentication,
+      })
+    } catch (error) {
+      console.error('Erreur:', error)
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors des tests",
+      })
+    } finally {
+      setIsTestLoading(false)
+      setIsTestDialogOpen(false)
+    }
+  }
+
   function handleTest() {
-    // La logique de test sera implémentée plus tard
-    setIsTestDialogOpen(false)
+    if (apiToTest) {
+      testApi(apiToTest.id)
+    } else {
+      testSelectedApis()
+    }
   }
 
   return (
@@ -174,7 +227,7 @@ export function ApiTable({
           <Button
             variant="outline"
             className="gap-2"
-            disabled={isLoading}
+            disabled={isLoading || isTestLoading}
             onClick={() => openTestDialog()}
           >
             <Play className="h-4 w-4" />
@@ -290,7 +343,7 @@ export function ApiTable({
       </AlertDialog>
 
       <Dialog open={isTestDialogOpen} onOpenChange={setIsTestDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>
               {apiToTest ? `Tester ${apiToTest.name}` : `Tester ${selectedApis.size} APIs`}
@@ -329,14 +382,47 @@ export function ApiTable({
                 </SelectContent>
               </Select>
             </div>
+
+            {testResult && (
+              <div className="space-y-4 mt-4">
+                <div className="rounded-lg border p-4">
+                  <h3 className="text-sm font-medium mb-2">Résultat</h3>
+                  <div className="space-y-2">
+                    <div>
+                      <span className="font-medium">Status:</span>{' '}
+                      <span className={testResult.status >= 400 ? 'text-red-600' : 'text-green-600'}>
+                        {testResult.status} {testResult.statusText}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-medium">Headers:</span>
+                      <pre className="mt-1 text-sm bg-gray-50 p-2 rounded overflow-auto">
+                        {JSON.stringify(testResult.headers, null, 2)}
+                      </pre>
+                    </div>
+                    <div>
+                      <span className="font-medium">Response:</span>
+                      <pre className="mt-1 text-sm bg-gray-50 p-2 rounded overflow-auto">
+                        {typeof testResult.data === 'string' 
+                          ? testResult.data 
+                          : JSON.stringify(testResult.data, null, 2)}
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsTestDialogOpen(false)}>
-              Annuler
+              Fermer
             </Button>
-            <Button onClick={handleTest}>
-              Tester
+            <Button 
+              onClick={handleTest}
+              disabled={isTestLoading}
+            >
+              {isTestLoading ? "Test en cours..." : "Tester"}
             </Button>
           </DialogFooter>
         </DialogContent>
