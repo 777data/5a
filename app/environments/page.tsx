@@ -2,9 +2,30 @@ import { prisma } from "@/lib/prisma"
 import { EnvironmentTable } from "./components/environment-table"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
 
 export default async function EnvironmentsPage() {
+  const cookieStore = await cookies()
+  const activeApplicationId = cookieStore.get('activeApplicationId')?.value
+
+  if (!activeApplicationId) {
+    return (
+      <div className="p-6">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+          <h2 className="text-lg font-semibold text-red-800">Aucune application sélectionnée</h2>
+          <p className="mt-2 text-red-700">
+            Veuillez sélectionner une application dans le menu en haut à droite pour voir ses environnements.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   const environments = await prisma.environment.findMany({
+    where: {
+      applicationId: activeApplicationId,
+    },
     orderBy: {
       createdAt: 'desc',
     },
@@ -14,13 +35,23 @@ export default async function EnvironmentsPage() {
           variableValues: true,
         },
       },
+      application: {
+        select: {
+          name: true,
+        },
+      },
     },
   })
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Environnements</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Environnements</h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Application : {environments[0]?.application.name ?? "Inconnue"}
+          </p>
+        </div>
         <Button asChild>
           <Link href="/environments/new">Créer un environnement</Link>
         </Button>

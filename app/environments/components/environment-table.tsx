@@ -27,6 +27,9 @@ type Environment = {
   id: string
   name: string
   createdAt: Date
+  application: {
+    name: string
+  }
 }
 
 type EnvironmentWithCount = Environment & {

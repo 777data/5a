@@ -41,8 +41,10 @@ model Environment {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   variableValues VariableValue[]
-  application    Application?    @relation(fields: [applicationId], references: [id])
-  applicationId  String?
+  application    Application     @relation(fields: [applicationId], references: [id])
+  applicationId  String
+
+  @@index([applicationId])
 }
 
 model Variable {
