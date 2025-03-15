@@ -242,40 +242,33 @@ export function ApiTable({
         url,
         method: selectedApi.method,
         headers: {
-          ...headers
+          ...headers,
+          'apiKey': '***',
+          'token': '***'
         },
         body
       })
 
-      // Effectuer l'appel API
-      const apiResponse = await fetch(url, {
-        method: selectedApi.method,
-        headers,
-        body,
+      // Effectuer l'appel API via notre proxy
+      const apiResponse = await fetch('/api/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url,
+          method: selectedApi.method,
+          headers,
+          body
+        })
       })
 
-      // Préparer les headers de la réponse
-      const responseHeaders: Record<string, string> = {}
-      apiResponse.headers.forEach((value, key) => {
-        responseHeaders[key] = value
-      })
-
-      // Déterminer le type de contenu de la réponse
-      const contentType = apiResponse.headers.get('content-type')
-      let data
-      if (contentType?.includes('application/json')) {
-        data = await apiResponse.json()
-      } else {
-        data = await apiResponse.text()
+      if (!apiResponse.ok) {
+        throw new Error("Erreur lors de l'appel à l'API")
       }
 
-      // Mettre à jour le résultat du test
-      setTestResult({
-        status: apiResponse.status,
-        statusText: apiResponse.statusText,
-        headers: responseHeaders,
-        data
-      })
+      const result = await apiResponse.json()
+      setTestResult(result)
 
     } catch (error) {
       console.error('Erreur:', error)
