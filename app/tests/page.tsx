@@ -4,7 +4,7 @@ import { TestHistoryTable } from "./components/test-history-table"
 import { notFound } from "next/navigation"
 
 export default async function TestHistoryPage() {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const activeApplicationId = cookieStore.get('activeApplicationId')?.value
 
   if (!activeApplicationId) {
@@ -36,8 +36,8 @@ export default async function TestHistoryPage() {
   })
 
   return (
-    <div className="container py-6 space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Historique des tests</h1>
       </div>
 
