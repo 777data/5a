@@ -14,6 +14,7 @@ model Application {
   updatedAt    DateTime      @updatedAt
   environments Environment[]
   authentications Authentication[]
+  apis         Api[]
 }
 
 model Api {
@@ -25,6 +26,10 @@ model Api {
   body      Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  application   Application @relation(fields: [applicationId], references: [id])
+  applicationId String
+
+  @@index([applicationId])
 }
 
 model Authentication {
