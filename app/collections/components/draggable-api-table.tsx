@@ -79,12 +79,49 @@ type DraggableApiTableProps = {
 const STORAGE_KEY = 'api-test-preferences'
 
 // Fonction utilitaire pour remplacer les variables
-function replaceVariables(template: string, variables: Array<{ name: string, value: string }>): string {
+function replaceVariables(
+  template: string, 
+  variables: Array<{ name: string, value: string }>,
+  previousResponse?: any
+): string {
   let result = template
+
+  // Remplacer les variables standard
   variables.forEach(variable => {
     const pattern = new RegExp(`{{${variable.name}}}`, 'g')
     result = result.replace(pattern, variable.value)
   })
+
+  // Remplacer les variables de type response.body.xxx si une réponse précédente existe
+  if (previousResponse) {
+    // Trouver toutes les occurrences de {{response.body.xxx}}
+    const responsePattern = /{{response\.body\.([\w\.]+)}}/g
+    let match
+
+    while ((match = responsePattern.exec(template)) !== null) {
+      const fullMatch = match[0]
+      const path = match[1].split('.')
+      
+      // Extraire la valeur du chemin dans la réponse
+      let value = previousResponse
+      try {
+        for (const key of path) {
+          value = value[key]
+          if (value === undefined) break
+        }
+        
+        // Remplacer la variable par la valeur si elle existe
+        if (value !== undefined) {
+          // Convertir en chaîne si nécessaire
+          const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value)
+          result = result.replace(fullMatch, stringValue)
+        }
+      } catch (error) {
+        console.warn(`Impossible d'accéder au chemin ${path.join('.')} dans la réponse précédente`, error)
+      }
+    }
+  }
+
   return result
 }
 
@@ -273,7 +310,7 @@ export function DraggableApiTable({
       const auth = await authResponse.json()
 
       // Remplacer les variables dans l'URL
-      const url = replaceVariables(selectedApi.url, variables)
+      const url = replaceVariables(selectedApi.url, variables, null)
 
       // Préparer les headers avec les variables remplacées et l'authentification
       const headers: Record<string, string> = {
@@ -284,7 +321,7 @@ export function DraggableApiTable({
       // Ajouter les headers personnalisés de l'API
       if (selectedApi.headers) {
         Object.entries(selectedApi.headers).forEach(([key, value]) => {
-          headers[key] = replaceVariables(value, variables)
+          headers[key] = replaceVariables(value, variables, null)
         })
       }
 
@@ -292,13 +329,13 @@ export function DraggableApiTable({
       let body = undefined
       if (selectedApi.body) {
         if (typeof selectedApi.body === 'string') {
-          body = replaceVariables(selectedApi.body, variables)
+          body = replaceVariables(selectedApi.body, variables, null)
         } else {
           // Si le body est un objet, on remplace les variables dans chaque valeur
           body = JSON.stringify(
             Object.entries(selectedApi.body).reduce((acc, [key, value]) => ({
               ...acc,
-              [key]: typeof value === 'string' ? replaceVariables(value, variables) : value
+              [key]: typeof value === 'string' ? replaceVariables(value, variables, null) : value
             }), {})
           )
         }
@@ -413,11 +450,12 @@ export function DraggableApiTable({
       // Tester chaque API dans l'ordre
       let overallStatus = "SUCCESS"
       const results = []
+      let previousResponse: Record<string, any> | null = null
 
       for (const api of selectedApisList) {
         try {
-          // Remplacer les variables dans l'URL
-          const url = replaceVariables(api.url, variables)
+          // Remplacer les variables dans l'URL, y compris celles de la réponse précédente
+          const url = replaceVariables(api.url, variables, previousResponse)
 
           // Préparer les headers avec les variables remplacées et l'authentification
           const headers: Record<string, string> = {
@@ -428,7 +466,7 @@ export function DraggableApiTable({
           // Ajouter les headers personnalisés de l'API
           if (api.headers) {
             Object.entries(api.headers).forEach(([key, value]) => {
-              headers[key] = replaceVariables(value, variables)
+              headers[key] = replaceVariables(value, variables, previousResponse)
             })
           }
 
@@ -436,13 +474,13 @@ export function DraggableApiTable({
           let body = undefined
           if (api.body) {
             if (typeof api.body === 'string') {
-              body = replaceVariables(api.body, variables)
+              body = replaceVariables(api.body, variables, previousResponse)
             } else {
               // Si le body est un objet, on remplace les variables dans chaque valeur
               body = JSON.stringify(
                 Object.entries(api.body).reduce((acc, [key, value]) => ({
                   ...acc,
-                  [key]: typeof value === 'string' ? replaceVariables(value, variables) : value
+                  [key]: typeof value === 'string' ? replaceVariables(value, variables, previousResponse) : value
                 }), {})
               )
             }
@@ -467,6 +505,9 @@ export function DraggableApiTable({
           const duration = Date.now() - startTime
 
           const result = await apiResponse.json()
+          
+          // Stocker la réponse pour l'utiliser dans les tests suivants
+          previousResponse = result.data
           
           // Ajouter le résultat
           results.push({
@@ -588,6 +629,23 @@ export function DraggableApiTable({
             Sauvegarder l'ordre
           </Button>
         )}
+      </div>
+
+      <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-4">
+        <h3 className="text-sm font-medium text-blue-800 mb-2">Utilisation des réponses entre les APIs</h3>
+        <p className="text-sm text-blue-700 mb-2">
+          Vous pouvez utiliser les données de la réponse d'une API précédente dans les tests suivants.
+        </p>
+        <p className="text-sm text-blue-700">
+          <strong>Syntaxe :</strong> <code className="bg-blue-100 px-1 py-0.5 rounded">{"{{response.body.property}}"}</code> - Remplace par la valeur de la propriété dans la réponse précédente.
+        </p>
+        <p className="text-sm text-blue-700 mt-1">
+          <strong>Exemple :</strong> Si l'API précédente renvoie <code className="bg-blue-100 px-1 py-0.5 rounded">{"{ \"id\": 123, \"name\": \"Test\" }"}</code>, 
+          vous pouvez utiliser <code className="bg-blue-100 px-1 py-0.5 rounded">{"{{response.body.id}}"}</code> pour obtenir <code className="bg-blue-100 px-1 py-0.5 rounded">123</code>.
+        </p>
+        <p className="text-sm text-blue-700 mt-1">
+          <strong>Note :</strong> Les APIs sont exécutées dans l'ordre affiché dans le tableau. Utilisez le glisser-déposer pour réorganiser l'ordre d'exécution.
+        </p>
       </div>
 
       <div className="rounded-md border">
