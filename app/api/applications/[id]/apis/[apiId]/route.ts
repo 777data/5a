@@ -124,6 +124,13 @@ export async function DELETE(
       )
     }
 
+    // Supprimer d'abord tous les résultats de test associés à cette API
+    await prisma.apiTestResult.deleteMany({
+      where: {
+        apiId: params.apiId,
+      },
+    })
+
     // Supprimer l'API
     await prisma.api.delete({
       where: {

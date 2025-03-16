@@ -1,5 +1,5 @@
 import { cookies } from "next/headers"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { ApiForm } from "../components/api-form"
 
@@ -12,16 +12,7 @@ export default async function EditApiPage({
   const activeApplicationId = cookieStore.get('activeApplicationId')?.value
 
   if (!activeApplicationId) {
-    return (
-      <div className="p-6">
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-          <h2 className="text-lg font-semibold text-red-800">Aucune application sélectionnée</h2>
-          <p className="mt-2 text-red-700">
-            Veuillez sélectionner une application dans le menu en haut à droite pour modifier une API.
-          </p>
-        </div>
-      </div>
-    )
+    redirect('/collections')
   }
 
   const api = await prisma.api.findUnique({

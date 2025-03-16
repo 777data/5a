@@ -178,8 +178,12 @@ export function ApiForm({ api, applicationId, initialCollectionId }: ApiFormProp
       // Rediriger vers la collection si l'API a été créée depuis une collection
       if (initialCollectionId && data.collectionId === initialCollectionId) {
         router.push(`/collections/${initialCollectionId}/view`)
+      } else if (data.collectionId && data.collectionId !== "none") {
+        // Si une collection est sélectionnée, rediriger vers cette collection
+        router.push(`/collections/${data.collectionId}/view`)
       } else {
-        router.push("/apis")
+        // Sinon, rediriger vers la page des collections
+        router.push("/collections")
       }
       router.refresh()
     } catch (error) {
@@ -348,16 +352,16 @@ export function ApiForm({ api, applicationId, initialCollectionId }: ApiFormProp
           />
         )}
 
-        <div className="flex gap-4">
-          <Button type="submit">
-            {api ? "Modifier" : "Créer"}
-          </Button>
+        <div className="flex justify-end gap-4 mt-8">
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push("/apis")}
+            onClick={() => router.push("/collections")}
           >
             Annuler
+          </Button>
+          <Button type="submit">
+            {api ? "Modifier" : "Créer"}
           </Button>
         </div>
       </form>
