@@ -10,6 +10,13 @@ export async function POST(request: NextRequest) {
     // Récupérer les données de la requête
     const { url, method, headers, body } = await request.json();
     
+    console.log(`[API_PROXY] Requête reçue:`, {
+      url,
+      method,
+      headersKeys: Object.keys(headers || {}),
+      bodyType: body ? typeof body : 'undefined'
+    });
+    
     if (!url) {
       return NextResponse.json(
         { error: "L'URL est requise" },
@@ -40,17 +47,27 @@ export async function POST(request: NextRequest) {
     if (body && requestMethod !== "GET") {
       if (typeof body === "object") {
         fetchOptions.body = JSON.stringify(body);
+        console.log(`[API_PROXY] Body (objet) ajouté à la requête`);
       } else {
         fetchOptions.body = body;
+        console.log(`[API_PROXY] Body (chaîne) ajouté à la requête`);
       }
     }
+    
+    console.log(`[API_PROXY] Options de la requête:`, {
+      method: fetchOptions.method,
+      headersKeys: Object.keys(fetchOptions.headers || {}),
+      hasBody: !!fetchOptions.body
+    });
     
     // Effectuer l'appel API
     const startTime = Date.now();
     let response;
     
     try {
+      console.log(`[API_PROXY] Tentative d'appel à ${url}`);
       response = await fetch(url, fetchOptions);
+      console.log(`[API_PROXY] Réponse reçue avec le statut ${response.status}`);
     } catch (error) {
       console.error(`[API_PROXY] Erreur lors de l'appel API:`, error);
       
@@ -77,22 +94,29 @@ export async function POST(request: NextRequest) {
     let responseData;
     const contentType = response.headers.get("content-type");
     
+    console.log(`[API_PROXY] Type de contenu de la réponse: ${contentType}`);
+    
     if (contentType?.includes("application/json")) {
       try {
         responseData = await response.json();
+        console.log(`[API_PROXY] Réponse JSON récupérée`);
       } catch (error) {
         console.warn(`[API_PROXY] Erreur lors de la conversion du body en JSON:`, error);
         responseData = await response.text();
+        console.log(`[API_PROXY] Réponse convertie en texte après échec de JSON`);
       }
     } else if (contentType?.includes("text/")) {
       responseData = await response.text();
+      console.log(`[API_PROXY] Réponse texte récupérée`);
     } else {
       // Pour les autres types de contenu, on renvoie le texte
       try {
         responseData = await response.text();
+        console.log(`[API_PROXY] Réponse convertie en texte`);
       } catch (error) {
         console.warn(`[API_PROXY] Impossible de lire le body de la réponse:`, error);
         responseData = null;
+        console.log(`[API_PROXY] Réponse définie à null après échec de lecture`);
       }
     }
     

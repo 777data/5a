@@ -276,30 +276,93 @@ export async function testSingleApi(
   try {
     const { url, method, headers, body } = prepareApiCallData(api, variables, authentication, previousResponse);
     
-    // Effectuer l'appel API via notre proxy
-    const apiResponse = await fetch('/api/proxy', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        url,
-        method,
-        headers,
-        body
-      })
+    console.log(`[API_TEST_SERVICE] Préparation de l'appel API pour ${api.name}:`, {
+      url,
+      method,
+      headersCount: Object.keys(headers).length,
+      hasBody: !!body
     });
+    
+    // Vérifier que l'URL est valide
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      console.error(`[API_TEST_SERVICE] URL invalide: ${url}`);
+      throw new Error(`URL invalide: ${url}`);
+    }
+    
+    // Effectuer l'appel API directement (sans passer par le proxy)
+    console.log(`[API_TEST_SERVICE] Appel direct à l'API pour ${api.name}`);
+    
+    const fetchOptions: RequestInit = {
+      method,
+      headers,
+    };
+    
+    // Ajouter le body si nécessaire
+    if (body && method !== "GET") {
+      if (typeof body === "object") {
+        fetchOptions.body = JSON.stringify(body);
+      } else {
+        fetchOptions.body = body;
+      }
+    }
+    
+    let response;
+    try {
+      response = await fetch(url, fetchOptions);
+      console.log(`[API_TEST_SERVICE] Réponse reçue pour ${api.name} avec le statut ${response.status}`);
+    } catch (error) {
+      console.error(`[API_TEST_SERVICE] Erreur lors de l'appel à l'API ${api.name}:`, error);
+      return {
+        result: {
+          apiId: api.id,
+          statusCode: 0,
+          duration: Date.now() - startTime,
+          response: {
+            headers: {},
+            data: null
+          },
+          error: error instanceof Error ? error.message : "Erreur réseau"
+        },
+        responseData: null
+      };
+    }
     
     const duration = Date.now() - startTime;
     
-    if (!apiResponse.ok) {
-      throw new Error(`Erreur HTTP: ${apiResponse.status} ${apiResponse.statusText}`);
+    // Récupérer les headers
+    const responseHeaders: Record<string, string> = {};
+    response.headers.forEach((value, key) => {
+      responseHeaders[key] = value;
+    });
+    
+    // Récupérer le body de la réponse
+    let responseData;
+    const contentType = response.headers.get("content-type");
+    
+    if (contentType?.includes("application/json")) {
+      try {
+        responseData = await response.json();
+      } catch (error) {
+        console.warn(`[API_TEST_SERVICE] Erreur lors de la conversion du body en JSON:`, error);
+        responseData = await response.text();
+      }
+    } else if (contentType?.includes("text/")) {
+      responseData = await response.text();
+    } else {
+      // Pour les autres types de contenu, on renvoie le texte
+      try {
+        responseData = await response.text();
+      } catch (error) {
+        console.warn(`[API_TEST_SERVICE] Impossible de lire le body de la réponse:`, error);
+        responseData = null;
+      }
     }
     
-    const result = await apiResponse.json();
-    
     // Vérifier si le status est 0 et le remplacer par 500
-    const statusCode = result.status === 0 ? 500 : result.status;
+    const statusCode = response.status === 0 ? 500 : response.status;
+    if (response.status === 0) {
+      console.warn(`[API_TEST_SERVICE] Status code 0 détecté pour ${api.name}, remplacé par 500`);
+    }
     
     return {
       result: {
@@ -307,15 +370,16 @@ export async function testSingleApi(
         statusCode,
         duration,
         response: {
-          headers: result.headers,
-          data: result.data
+          headers: responseHeaders,
+          data: responseData
         },
-        error: statusCode >= 400 ? result.statusText : null
+        error: statusCode >= 400 ? response.statusText : null
       },
-      responseData: result.data
+      responseData
     };
   } catch (error) {
     const duration = Date.now() - startTime;
+    console.error(`[API_TEST_SERVICE] Erreur lors du test de l'API ${api.name}:`, error);
     
     return {
       result: {
@@ -339,90 +403,123 @@ export async function testSingleApi(
  * @returns Les résultats des tests
  */
 export async function testMultipleApis(params: TestParams): Promise<TestResults> {
-  const { applicationId, environmentId, authenticationId, apis } = params;
-  
-  // Récupérer les variables d'environnement
-  const variables = await getEnvironmentVariables(environmentId);
-  
-  // Récupérer l'authentification
-  const authentication = await getAuthentication(authenticationId);
-  
-  // Trier les APIs par ordre si disponible
-  const sortedApis = [...apis].sort((a, b) => {
-    if (a.order !== undefined && b.order !== undefined) {
-      return a.order - b.order;
-    }
-    return 0;
+  console.log(`[API_TEST_SERVICE] Début du test de ${params.apis.length} API(s)`, {
+    applicationId: params.applicationId,
+    environmentId: params.environmentId,
+    authenticationId: params.authenticationId,
+    hasPreviousResponse: !!params.previousResponse
   });
   
-  // Tester chaque API dans l'ordre
-  const results: ApiTestResult[] = [];
-  let previousResponse = params.previousResponse;
-  let totalDuration = 0;
+  const startTime = Date.now();
   
-  for (const api of sortedApis) {
-    const { result, responseData } = await testSingleApi(api, variables, authentication, previousResponse);
+  try {
+    // Récupérer les variables d'environnement
+    console.log(`[API_TEST_SERVICE] Récupération des variables d'environnement pour l'environnement ${params.environmentId}`);
+    const variables = await getEnvironmentVariables(params.environmentId);
+    console.log(`[API_TEST_SERVICE] ${variables.length} variables récupérées`);
     
-    results.push(result);
-    totalDuration += result.duration;
+    // Récupérer l'authentification
+    console.log(`[API_TEST_SERVICE] Récupération de l'authentification ${params.authenticationId || 'aucune'}`);
+    const authentication = await getAuthentication(params.authenticationId);
+    console.log(`[API_TEST_SERVICE] Authentification récupérée:`, {
+      hasApiKey: !!authentication?.apiKey,
+      hasToken: !!authentication?.token
+    });
     
-    // Stocker la réponse pour l'utiliser dans les tests suivants
-    previousResponse = responseData;
-  }
-  
-  // Déterminer le statut global
-  let status: "SUCCESS" | "PARTIAL" | "FAILED" = "SUCCESS";
-  
-  // Si au moins une API a échoué avec un code 401, 403, 404 ou 5xx, c'est un échec
-  const hasAuthErrors = results.some(result => 
-    result.statusCode === 401 || 
-    result.statusCode === 403 || 
-    result.statusCode === 404 || 
-    result.statusCode >= 500
-  );
-  
-  // Si toutes les APIs ont échoué, c'est un échec
-  const allFailed = results.every(result => result.statusCode >= 400);
-  
-  // Si au moins une API a échoué mais pas toutes, c'est partiel
-  const someFailedButNotAll = results.some(result => result.statusCode >= 400) && !allFailed;
-  
-  // Forcer le statut à FAILED si au moins une API a retourné une erreur 401
-  if (results.some(result => result.statusCode === 401)) {
-    status = "FAILED";
-  } else if (hasAuthErrors || allFailed) {
-    status = "FAILED";
-  } else if (someFailedButNotAll) {
-    status = "PARTIAL";
-  }
-  
-  // Enregistrer les résultats des tests
-  const testData = await prisma.apiTest.create({
-    data: {
-      applicationId,
-      environmentId,
-      authenticationId,
-      duration: totalDuration,
-      status,
-      results: {
-        create: results.map(result => ({
-          apiId: result.apiId,
-          statusCode: result.statusCode,
-          duration: result.duration,
-          response: result.response,
-          error: result.error
-        }))
+    // Tester chaque API
+    const results: ApiTestResult[] = [];
+    let overallStatus = "SUCCESS";
+    let previousResponseData = params.previousResponse;
+    
+    for (const api of params.apis) {
+      console.log(`[API_TEST_SERVICE] Test de l'API ${api.name} (${api.id})`);
+      
+      try {
+        const { result, responseData } = await testSingleApi(
+          api,
+          variables,
+          authentication,
+          previousResponseData
+        );
+        
+        results.push(result);
+        previousResponseData = responseData;
+        
+        // Mettre à jour le statut global
+        if (result.statusCode >= 400 && overallStatus === "SUCCESS") {
+          overallStatus = "PARTIAL";
+        }
+        
+        console.log(`[API_TEST_SERVICE] Test de l'API ${api.name} terminé avec le statut ${result.statusCode}`);
+      } catch (error) {
+        console.error(`[API_TEST_SERVICE] Erreur lors du test de l'API ${api.name}:`, error);
+        
+        // Ajouter un résultat d'erreur
+        results.push({
+          apiId: api.id,
+          statusCode: 500,
+          duration: 0,
+          response: {
+            headers: {},
+            data: null
+          },
+          error: error instanceof Error ? error.message : "Une erreur est survenue"
+        });
+        
+        // Mettre à jour le statut global
+        if (overallStatus === "SUCCESS") {
+          overallStatus = "PARTIAL";
+        }
       }
-    },
-    select: {
-      id: true
     }
-  });
-  
-  return {
-    id: testData.id,
-    status,
-    duration: totalDuration,
-    results
-  };
+    
+    // Si tous les tests ont échoué, le statut global est "FAILED"
+    if (results.every(result => result.statusCode >= 400)) {
+      overallStatus = "FAILED";
+    }
+    
+    const duration = Date.now() - startTime;
+    
+    // Enregistrer les résultats dans la base de données
+    console.log(`[API_TEST_SERVICE] Enregistrement des résultats dans la base de données`);
+    try {
+      const test = await prisma.apiTest.create({
+        data: {
+          applicationId: params.applicationId,
+          environmentId: params.environmentId,
+          authenticationId: params.authenticationId,
+          startedAt: new Date(startTime),
+          duration,
+          status: overallStatus,
+          results: {
+            create: results.map(result => ({
+              apiId: result.apiId,
+              statusCode: result.statusCode,
+              duration: result.duration,
+              response: {
+                headers: result.response.headers,
+                data: result.response.data
+              },
+              error: result.error
+            }))
+          }
+        }
+      });
+      
+      console.log(`[API_TEST_SERVICE] Résultats enregistrés avec l'ID ${test.id}`);
+      
+      return {
+        id: test.id,
+        status: overallStatus as "SUCCESS" | "PARTIAL" | "FAILED",
+        duration,
+        results
+      };
+    } catch (dbError) {
+      console.error(`[API_TEST_SERVICE] Erreur lors de l'enregistrement des résultats:`, dbError);
+      throw new Error("Erreur lors de l'enregistrement des résultats");
+    }
+  } catch (error) {
+    console.error(`[API_TEST_SERVICE] Erreur lors du test des APIs:`, error);
+    throw error;
+  }
 } 
