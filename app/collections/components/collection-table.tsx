@@ -138,15 +138,17 @@ export function CollectionTable({
     }
 
     try {
-      // Tester chaque collection sélectionnée
+      // Tester chaque collection sélectionnée une par une
       for (const collectionId of selectedCollections) {
+        console.log(`[COLLECTION_TABLE] Test de la collection ${collectionId}`)
+        // Appeler la fonction testCollection du hook qui utilise maintenant la Server Action
         await testCollection(collectionId, environmentId, authenticationId)
       }
       
       // Fermer la boîte de dialogue après le test
       setIsTestDialogOpen(false)
     } catch (error) {
-      console.error('Erreur lors du test des collections:', error)
+      console.error('[COLLECTION_TABLE] Erreur lors du test des collections:', error)
       toast({
         variant: "destructive",
         title: "Erreur",

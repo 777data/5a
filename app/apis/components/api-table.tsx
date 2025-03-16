@@ -143,9 +143,12 @@ export function ApiTable({
         url: apiToTest.url,
         method: apiToTest.method,
         headers: apiToTest.headers,
-        body: apiToTest.body
+        body: apiToTest.body,
+        order: apiToTest.order
       }
       
+      console.log(`[API_TABLE] Test de l'API ${apiToTest.name}`)
+      // Utiliser le hook qui appelle maintenant la Server Action
       await testSingleApi(apiToTestData, environmentId, authenticationId)
     } else if (selectedApis.size > 0) {
       // Tester plusieurs APIs sélectionnées
@@ -157,9 +160,12 @@ export function ApiTable({
           url: api.url,
           method: api.method,
           headers: api.headers,
-          body: api.body
+          body: api.body,
+          order: api.order
         }))
       
+      console.log(`[API_TABLE] Test de ${selectedApisList.length} APIs sélectionnées`)
+      // Utiliser le hook qui appelle maintenant la Server Action
       await testApis({
         apis: selectedApisList,
         environmentId,

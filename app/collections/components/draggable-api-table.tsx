@@ -230,9 +230,12 @@ export function DraggableApiTable({
         url: apiToTest.url,
         method: apiToTest.method,
         headers: apiToTest.headers,
-        body: apiToTest.body
+        body: apiToTest.body,
+        order: apiToTest.order
       }
       
+      console.log(`[DRAGGABLE_API_TABLE] Test de l'API ${apiToTest.name}`)
+      // Utiliser le hook qui appelle maintenant la Server Action
       await testSingleApi(apiToTestData, environmentId, authenticationId)
     } else if (selectedApis.size > 0) {
       // Tester plusieurs APIs sélectionnées
@@ -249,6 +252,8 @@ export function DraggableApiTable({
           order: api.order
         }))
       
+      console.log(`[DRAGGABLE_API_TABLE] Test de ${selectedApisList.length} APIs sélectionnées`)
+      // Utiliser le hook qui appelle maintenant la Server Action
       await testApis({
         apis: selectedApisList,
         environmentId,
@@ -256,6 +261,8 @@ export function DraggableApiTable({
       })
     } else {
       // Tester toute la collection
+      console.log(`[DRAGGABLE_API_TABLE] Test de la collection entière ${collectionId}`)
+      // Utiliser le hook qui appelle maintenant la Server Action
       await testCollection(collectionId, environmentId, authenticationId)
     }
     

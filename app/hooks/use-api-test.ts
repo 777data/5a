@@ -2,6 +2,12 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { ApiToTest, TestResults } from '@/app/services/api-test.service'
+import { 
+  testApis as testApisAction, 
+  testSingleApi as testSingleApiAction, 
+  testCollection as testCollectionAction,
+  redirectToTestResults
+} from '@/app/actions/api-test.action'
 
 type ApiTestHookParams = {
   applicationId: string
@@ -55,59 +61,51 @@ export function useApiTest({ applicationId }: ApiTestHookParams) {
     setTestResults(null)
 
     try {
-      // Déterminer l'endpoint à utiliser
-      let endpoint = '/api/tests'
-      let requestBody: any = {
-        applicationId,
-        environmentId,
-        authenticationId,
-        apis,
-        previousResponse
-      }
+      let response;
 
-      // Si un ID de collection est fourni, utiliser l'endpoint de test de collection
+      // Si un ID de collection est fourni, utiliser l'action de test de collection
       if (collectionId) {
-        endpoint = '/api/collections/test'
-        requestBody = {
+        console.log(`[USE_API_TEST] Test de la collection ${collectionId}`, {
+          environmentId,
+          authenticationId,
+          hasPreviousResponse: !!previousResponse
+        })
+
+        response = await testCollectionAction({
           collectionId,
           environmentId,
           authenticationId,
           previousResponse
-        }
+        })
+      } else {
+        // Sinon, utiliser l'action de test d'APIs
+        console.log(`[USE_API_TEST] Test de ${apis.length} API(s)`, {
+          environmentId,
+          authenticationId,
+          hasPreviousResponse: !!previousResponse
+        })
+
+        response = await testApisAction({
+          apis,
+          environmentId,
+          authenticationId,
+          previousResponse,
+          applicationId
+        })
       }
 
-      console.log(`Envoi de la requête de test à ${endpoint}:`, {
-        environmentId,
-        authenticationId,
-        apisCount: apis.length,
-        collectionId,
-        hasPreviousResponse: !!previousResponse
-      })
-
-      // Effectuer la requête
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
-      })
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error(`Erreur lors du test des APIs:`, errorText)
-        throw new Error("Erreur lors du test des APIs")
+      if (!response.success) {
+        throw new Error(response.error || "Une erreur est survenue")
       }
 
-      // Récupérer les résultats
-      const results: TestResults = await response.json()
+      const results = response.results!
       setTestResults(results)
 
       // Stocker la dernière réponse pour les tests suivants
       if (results.results.length > 0) {
         const lastResult = results.results[results.results.length - 1]
         setLastResponse(lastResult.response.data)
-        console.log("Dernière réponse mémorisée:", lastResult.response.data)
+        console.log("[USE_API_TEST] Dernière réponse mémorisée:", lastResult.response.data)
       }
 
       // Afficher un message de succès
@@ -117,11 +115,13 @@ export function useApiTest({ applicationId }: ApiTestHookParams) {
       })
 
       // Rediriger vers la page d'historique des tests avec l'ID du test
-      router.push(`/tests?testId=${results.id}`)
+      if (response.testId) {
+        router.push(`/tests?testId=${response.testId}`)
+      }
 
       return results
     } catch (error) {
-      console.error('Erreur lors du test des APIs:', error)
+      console.error('[USE_API_TEST] Erreur lors du test des APIs:', error)
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -137,37 +137,120 @@ export function useApiTest({ applicationId }: ApiTestHookParams) {
    * Teste une seule API
    */
   const testSingleApi = async (api: ApiToTest, environmentId: string, authenticationId: string | null, previousResponse?: any) => {
-    console.log(`Test de l'API ${api.name} (${api.id}):`, {
+    console.log(`[USE_API_TEST] Test de l'API ${api.name} (${api.id}):`, {
       environmentId,
       authenticationId,
       hasPreviousResponse: !!previousResponse
     })
     
-    return testApis({
-      apis: [api],
-      environmentId,
-      authenticationId,
-      previousResponse: previousResponse || lastResponse
-    })
+    setIsLoading(true)
+    
+    try {
+      const response = await testSingleApiAction(
+        api, 
+        environmentId, 
+        authenticationId, 
+        previousResponse || lastResponse,
+        applicationId
+      )
+      
+      if (!response.success) {
+        throw new Error(response.error || "Une erreur est survenue")
+      }
+      
+      const results = response.results!
+      setTestResults(results)
+      
+      // Stocker la dernière réponse pour les tests suivants
+      if (results.results.length > 0) {
+        const lastResult = results.results[results.results.length - 1]
+        setLastResponse(lastResult.response.data)
+        console.log("[USE_API_TEST] Dernière réponse mémorisée:", lastResult.response.data)
+      }
+      
+      // Afficher un message de succès
+      toast({
+        title: "Test terminé",
+        description: `L'API a été testée avec succès.`,
+      })
+      
+      // Rediriger vers la page d'historique des tests avec l'ID du test
+      if (response.testId) {
+        router.push(`/tests?testId=${response.testId}`)
+      }
+      
+      return results
+    } catch (error) {
+      console.error('[USE_API_TEST] Erreur lors du test de l\'API:', error)
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors du test",
+      })
+      return null
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   /**
    * Teste une collection d'APIs
    */
   const testCollection = async (collectionId: string, environmentId: string, authenticationId: string | null, previousResponse?: any) => {
-    console.log(`Test de la collection ${collectionId}:`, {
+    console.log(`[USE_API_TEST] Test de la collection ${collectionId}:`, {
       environmentId,
       authenticationId,
       hasPreviousResponse: !!previousResponse
     })
     
-    return testApis({
-      apis: [],
-      environmentId,
-      authenticationId,
-      previousResponse: previousResponse || lastResponse,
-      collectionId
-    })
+    setIsLoading(true)
+    
+    try {
+      // Appeler directement la Server Action pour tester la collection
+      const response = await testCollectionAction({
+        collectionId,
+        environmentId,
+        authenticationId,
+        previousResponse: previousResponse || lastResponse
+      })
+      
+      if (!response.success) {
+        throw new Error(response.error || "Une erreur est survenue")
+      }
+      
+      const results = response.results!
+      setTestResults(results)
+      
+      // Stocker la dernière réponse pour les tests suivants
+      if (results.results.length > 0) {
+        const lastResult = results.results[results.results.length - 1]
+        setLastResponse(lastResult.response.data)
+        console.log("[USE_API_TEST] Dernière réponse mémorisée:", lastResult.response.data)
+      }
+      
+      // Afficher un message de succès
+      toast({
+        title: "Test terminé",
+        description: `La collection a été testée avec succès.`,
+      })
+      
+      // Rediriger vers la page d'historique des tests avec l'ID du test
+      if (response.testId) {
+        router.push(`/tests?testId=${response.testId}`)
+      }
+      
+      return results
+    } catch (error) {
+      console.error('[USE_API_TEST] Erreur lors du test de la collection:', error)
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors du test",
+      })
+      return null
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   /**
@@ -175,7 +258,7 @@ export function useApiTest({ applicationId }: ApiTestHookParams) {
    */
   const resetLastResponse = () => {
     setLastResponse(null)
-    console.log("Dernière réponse réinitialisée")
+    console.log("[USE_API_TEST] Dernière réponse réinitialisée")
   }
 
   return {
