@@ -4,6 +4,7 @@ export async function POST(request: Request) {
   try {
     const { url, method, headers, body } = await request.json()
 
+    console.log('[TEST_API]', url, method, headers, body)
     // Effectuer l'appel API avec les options CORS
     const response = await fetch(url, {
       method,

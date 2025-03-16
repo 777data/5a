@@ -56,6 +56,36 @@ export function TestHistoryTable({ tests }: TestHistoryTableProps) {
   const searchParams = useSearchParams()
   const [expandedTest, setExpandedTest] = useState<string | null>(null)
 
+  // Recalculer le statut des tests en fonction des résultats
+  const testsWithRecalculatedStatus = tests.map(test => {
+    // Si au moins un résultat a un code 401, 403, 404 ou 5xx, le statut est FAILED
+    const hasAuthErrors = test.results.some(result => 
+      result.statusCode === 401 || 
+      result.statusCode === 403 || 
+      result.statusCode === 404 || 
+      result.statusCode >= 500
+    )
+    
+    // Si tous les résultats ont échoué, le statut est FAILED
+    const allFailed = test.results.every(result => result.statusCode >= 400)
+    
+    // Si au moins un résultat a échoué mais pas tous, le statut est PARTIAL
+    const someFailedButNotAll = test.results.some(result => result.statusCode >= 400) && !allFailed
+    
+    let recalculatedStatus = test.status
+    
+    if (hasAuthErrors || allFailed) {
+      recalculatedStatus = "FAILED"
+    } else if (someFailedButNotAll) {
+      recalculatedStatus = "PARTIAL"
+    }
+    
+    return {
+      ...test,
+      recalculatedStatus
+    }
+  })
+
   // Vérifier si un testId est spécifié dans l'URL et déployer ce test
   useEffect(() => {
     const testId = searchParams.get('testId')
@@ -94,7 +124,7 @@ export function TestHistoryTable({ tests }: TestHistoryTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {tests.map((test) => (
+          {testsWithRecalculatedStatus.map((test) => (
             <Fragment key={test.id}>
               <TableRow id={`test-${test.id}`}>
                 <TableCell className="px-4 py-3">
@@ -112,13 +142,13 @@ export function TestHistoryTable({ tests }: TestHistoryTableProps) {
                 <TableCell className="px-4 py-3">
                   <Badge
                     className={`px-2 py-1 rounded-full text-xs font-medium
-                      ${test.status === "SUCCESS" ? 'bg-green-100 text-green-700' :
-                        test.status === "PARTIAL" ? 'bg-yellow-100 text-yellow-700' :
+                      ${test.recalculatedStatus === "SUCCESS" ? 'bg-green-100 text-green-700' :
+                        test.recalculatedStatus === "PARTIAL" ? 'bg-yellow-100 text-yellow-700' :
                         'bg-red-100 text-red-700'
                       }`}
                   >
-                    {test.status === "SUCCESS" ? "Succès" :
-                     test.status === "PARTIAL" ? "Partiel" :
+                    {test.recalculatedStatus === "SUCCESS" ? "Succès" :
+                     test.recalculatedStatus === "PARTIAL" ? "Partiel" :
                      "Échec"}
                   </Badge>
                   <div className="text-xs text-gray-500 mt-1">

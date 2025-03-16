@@ -122,6 +122,12 @@ function replaceVariables(
     }
   }
 
+  // Vérifier s'il reste des variables non remplacées
+  const remainingVars = result.match(/{{[^{}]+}}/g)
+  if (remainingVars) {
+    console.warn(`Variables non remplacées détectées: ${remainingVars.join(', ')}`)
+  }
+
   return result
 }
 
@@ -359,11 +365,13 @@ export function DraggableApiTable({
 
       const duration = Date.now() - startTime
 
-      if (!apiResponse.ok) {
-        throw new Error("Erreur lors de l'appel à l'API")
-      }
-
       const result = await apiResponse.json()
+
+      // Déterminer le statut en fonction du code de statut
+      let status = "SUCCESS"
+      if (result.status >= 400) {
+        status = "FAILED"
+      }
 
       // Enregistrer le résultat du test
       const testResponse = await fetch('/api/tests', {
@@ -376,7 +384,7 @@ export function DraggableApiTable({
           environmentId: selectedEnvironment,
           authenticationId: selectedAuthentication,
           duration,
-          status: result.status < 400 ? "SUCCESS" : "FAILED",
+          status: status,
           results: [{
             apiId: apiId,
             statusCode: result.status,
@@ -521,10 +529,7 @@ export function DraggableApiTable({
             error: result.status >= 400 ? result.statusText : null
           })
           
-          // Mettre à jour le statut global
-          if (result.status >= 400 && overallStatus === "SUCCESS") {
-            overallStatus = "PARTIAL"
-          }
+          // Nous ne mettons plus à jour le statut global ici, il sera recalculé à la fin
         } catch (error) {
           console.error(`Erreur lors du test de l'API ${api.name}:`, error)
           
@@ -537,17 +542,35 @@ export function DraggableApiTable({
             error: error instanceof Error ? error.message : "Une erreur est survenue"
           })
           
-          // Mettre à jour le statut global
-          if (overallStatus === "SUCCESS") {
-            overallStatus = "PARTIAL"
-          }
+          // Nous ne mettons plus à jour le statut global ici, il sera recalculé à la fin
         }
       }
       
-      // Si tous les tests ont échoué, le statut global est "FAILED"
-      if (results.every(result => result.statusCode >= 400)) {
+      // Recalculer le statut global en fonction des résultats
+      // Si au moins une API a échoué avec un code 401, 403, 404 ou 5xx, c'est un échec
+      const hasAuthErrors = results.some(result => 
+        result.statusCode === 401 || 
+        result.statusCode === 403 || 
+        result.statusCode === 404 || 
+        result.statusCode >= 500
+      )
+      
+      // Si toutes les APIs ont échoué, c'est un échec
+      const allFailed = results.every(result => result.statusCode >= 400)
+      
+      // Si au moins une API a échoué mais pas toutes, c'est partiel
+      const someFailedButNotAll = results.some(result => result.statusCode >= 400) && !allFailed
+      
+      // Forcer le statut à FAILED si au moins une API a retourné une erreur 401
+      if (results.some(result => result.statusCode === 401)) {
         overallStatus = "FAILED"
+      } else if (hasAuthErrors || allFailed) {
+        overallStatus = "FAILED"
+      } else if (someFailedButNotAll) {
+        overallStatus = "PARTIAL"
       }
+      
+      console.log("Statut global:", overallStatus, "Résultats:", results.map(r => r.statusCode));
       
       // Enregistrer les résultats des tests
       const testResponse = await fetch('/api/tests', {
