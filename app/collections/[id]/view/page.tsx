@@ -1,11 +1,9 @@
 import { prisma } from "@/lib/prisma"
 import { notFound } from "next/navigation"
-import { ApiTable } from "@/app/apis/components/api-table"
-import { ApiOrderManager } from "@/app/collections/components/api-order-manager"
+import { DraggableApiTable } from "@/app/collections/components/draggable-api-table"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link"
-import { Plus, List, SortAsc } from "lucide-react"
+import { Plus } from "lucide-react"
 
 export default async function CollectionDetailPage({ params }: { params: { id: string } }) {
   const collectionId = params.id
@@ -48,7 +46,7 @@ export default async function CollectionDetailPage({ params }: { params: { id: s
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">{collection.name}</h1>
+          <h2 className="text-2xl font-bold">{collection.name}</h2>
           <p className="text-sm text-gray-500 mt-1">
             Application : {collection.application.name}
           </p>
@@ -73,34 +71,13 @@ export default async function CollectionDetailPage({ params }: { params: { id: s
         </div>
       </div>
 
-      <Tabs defaultValue="apis" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="apis" className="flex items-center gap-2">
-            <List className="h-4 w-4" />
-            Liste des APIs
-          </TabsTrigger>
-          <TabsTrigger value="order" className="flex items-center gap-2">
-            <SortAsc className="h-4 w-4" />
-            Ordre d'exécution
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="apis" className="mt-0">
-          <ApiTable 
-            apis={collection.apis} 
-            applicationId={collection.application.id}
-            environments={environments}
-            authentications={authentications}
-          />
-        </TabsContent>
-        
-        <TabsContent value="order" className="mt-0">
-          <ApiOrderManager 
-            apis={collection.apis} 
-            collectionId={collection.id}
-          />
-        </TabsContent>
-      </Tabs>
+      <DraggableApiTable 
+        apis={collection.apis} 
+        applicationId={collection.application.id}
+        collectionId={collection.id}
+        environments={environments}
+        authentications={authentications}
+      />
     </div>
   )
 } 

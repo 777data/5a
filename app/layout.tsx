@@ -44,7 +44,7 @@ export default async function RootLayout({
               <Link href="/" className="flex flex-col items-center">
                 <div className="flex flex-col items-center">
                   <Image 
-                    src="/AAAAA.jpeg" 
+                    src="/AAAAA.png" 
                     alt="AAAAA" 
                     width={80} 
                     height={40} 
@@ -157,7 +157,8 @@ export default async function RootLayout({
           {/* Main Content */}
           <div className="flex-1 flex flex-col">
             {/* Header */}
-            <header className="h-16 border-b bg-white px-6 flex items-center justify-end">
+            <header className="h-16 border-b bg-white px-6 flex items-center justify-between">
+              <h1 className="text-xl font-bold text-primary">Advanced Automated API Auditing & Assessment</h1>
               <ApplicationSelector
                 applications={applications}
                 selectedApplicationId={activeApplicationId}
