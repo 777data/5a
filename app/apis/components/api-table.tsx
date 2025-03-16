@@ -22,23 +22,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
+import { useApiTest } from "@/app/hooks/use-api-test"
+import { ApiToTest } from "@/app/services/api-test.service"
+import { ApiTestDialog } from "@/app/components/api-test-dialog"
 import { Edit, Play, Trash2 } from "lucide-react"
-import { prisma } from "@/lib/prisma"
 
 type Api = {
   id: string
@@ -69,25 +57,6 @@ type ApiTableProps = {
   onTestSelected?: (selectedIds: string[]) => void
 }
 
-type TestResult = {
-  status: number
-  statusText: string
-  headers: Record<string, string>
-  data: any
-}
-
-const STORAGE_KEY = 'api-test-preferences'
-
-// Fonction utilitaire pour remplacer les variables
-function replaceVariables(template: string, variables: Array<{ name: string, value: string }>): string {
-  let result = template
-  variables.forEach(variable => {
-    const pattern = new RegExp(`{{${variable.name}}}`, 'g')
-    result = result.replace(pattern, variable.value)
-  })
-  return result
-}
-
 export function ApiTable({ 
   apis, 
   applicationId, 
@@ -102,28 +71,13 @@ export function ApiTable({
   const [selectedApis, setSelectedApis] = useState<Set<string>>(new Set())
   const [isTestDialogOpen, setIsTestDialogOpen] = useState(false)
   const [apiToTest, setApiToTest] = useState<Api | null>(null)
-  const [selectedEnvironment, setSelectedEnvironment] = useState<string>('')
-  const [selectedAuthentication, setSelectedAuthentication] = useState<string>('')
-  const [isTestLoading, setIsTestLoading] = useState(false)
-  const [testResult, setTestResult] = useState<TestResult | null>(null)
-
-  // Charger les préférences depuis le localStorage
-  useEffect(() => {
-    const preferences = localStorage.getItem(STORAGE_KEY)
-    if (preferences) {
-      const { environmentId, authenticationId } = JSON.parse(preferences)
-      setSelectedEnvironment(environmentId || '')
-      setSelectedAuthentication(authenticationId || '')
-    }
-  }, [])
-
-  // Sauvegarder les préférences dans le localStorage
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      environmentId: selectedEnvironment,
-      authenticationId: selectedAuthentication,
-    }))
-  }, [selectedEnvironment, selectedAuthentication])
+  
+  // Utiliser notre hook de test d'API
+  const { 
+    isLoading: isTestLoading, 
+    testSingleApi, 
+    testApis 
+  } = useApiTest({ applicationId })
 
   async function deleteApi(api: Api) {
     setIsLoading(true)
@@ -175,339 +129,46 @@ export function ApiTable({
   }
 
   function openTestDialog(api?: Api) {
-    if (api) {
-      setApiToTest(api)
-    } else {
-      setApiToTest(null)
-    }
+    setApiToTest(api || null)
     setIsTestDialogOpen(true)
   }
 
-  async function testApi(apiId: string) {
-    setIsTestLoading(true)
-    try {
-      // Trouver l'API sélectionnée
-      const selectedApi = apis.find(api => api.id === apiId)
-      if (!selectedApi) {
-        throw new Error("API non trouvée")
-      }
-
-      // Récupérer les variables de l'environnement
-      const variablesResponse = await fetch(`/api/environments/${selectedEnvironment}/variables`)
-      if (!variablesResponse.ok) {
-        throw new Error("Impossible de récupérer les variables")
-      }
-      const variables = await variablesResponse.json()
-
-      // Récupérer l'authentification sélectionnée
-      const authResponse = await fetch(`/api/applications/${applicationId}/authentications/${selectedAuthentication}`)
-      if (!authResponse.ok) {
-        throw new Error("Impossible de récupérer l'authentification")
-      }
-      const auth = await authResponse.json()
-
-      // Remplacer les variables dans l'URL
-      const url = replaceVariables(selectedApi.url, variables)
-
-      // Préparer les headers avec les variables remplacées et l'authentification
-      const headers: Record<string, string> = {
-        'apiKey': auth.apiKey,
-        'token': auth.token
+  // Gérer le test d'API(s)
+  const handleTest = async (environmentId: string, authenticationId: string | null) => {
+    if (apiToTest) {
+      // Tester une seule API
+      const apiToTestData: ApiToTest = {
+        id: apiToTest.id,
+        name: apiToTest.name,
+        url: apiToTest.url,
+        method: apiToTest.method,
+        headers: apiToTest.headers,
+        body: apiToTest.body
       }
       
-      // Ajouter les headers personnalisés de l'API
-      if (selectedApi.headers) {
-        Object.entries(selectedApi.headers).forEach(([key, value]) => {
-          headers[key] = replaceVariables(value, variables)
-        })
-      }
-
-      // Préparer le body avec les variables remplacées si nécessaire
-      let body = undefined
-      if (selectedApi.body) {
-        if (typeof selectedApi.body === 'string') {
-          body = replaceVariables(selectedApi.body, variables)
-        } else {
-          // Si le body est un objet, on remplace les variables dans chaque valeur
-          body = JSON.stringify(
-            Object.entries(selectedApi.body).reduce((acc, [key, value]) => ({
-              ...acc,
-              [key]: typeof value === 'string' ? replaceVariables(value, variables) : value
-            }), {})
-          )
-        }
-      }
-
-      // Log de la requête finale (en masquant les valeurs sensibles)
-      console.log('Requête finale:', {
-        url,
-        method: selectedApi.method,
-        headers: {
-          ...headers,
-          'apiKey': '***',
-          'token': '***'
-        },
-        body
-      })
-
-      const startTime = Date.now()
-
-      // Effectuer l'appel API via notre proxy
-      const apiResponse = await fetch('/api/test', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          url,
-          method: selectedApi.method,
-          headers,
-          body
-        })
-      })
-
-      const duration = Date.now() - startTime
-
-      if (!apiResponse.ok) {
-        throw new Error("Erreur lors de l'appel à l'API")
-      }
-
-      const result = await apiResponse.json()
-
-      // Enregistrer le résultat du test
-      const testResponse = await fetch('/api/tests', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          applicationId,
-          environmentId: selectedEnvironment,
-          authenticationId: selectedAuthentication,
-          duration,
-          status: result.status < 400 ? "SUCCESS" : "FAILED",
-          results: [{
-            apiId: apiId,
-            statusCode: result.status,
-            duration,
-            response: {
-              headers: result.headers,
-              data: result.data
-            },
-            error: result.status >= 400 ? result.statusText : null
-          }]
-        })
-      })
-
-      if (!testResponse.ok) {
-        console.error("Erreur lors de l'enregistrement du test:", await testResponse.text())
-        throw new Error("Erreur lors de l'enregistrement du test")
-      }
-
-      // Récupérer l'ID du test créé
-      const testData = await testResponse.json()
-      
-      // Afficher un message de succès
-      toast({
-        title: "Test terminé",
-        description: `Le test de l'API "${selectedApi.name}" a été effectué avec succès.`,
-      })
-
-      // Fermer la boîte de dialogue
-      setIsTestDialogOpen(false)
-      
-      // Rediriger vers la page d'historique des tests avec l'ID du test
-      router.push(`/tests?testId=${testData.id}`)
-
-    } catch (error) {
-      console.error('Erreur:', error)
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur est survenue lors du test",
-      })
-    } finally {
-      setIsTestLoading(false)
-    }
-  }
-
-  async function testSelectedApis() {
-    setIsLoading(true)
-    try {
-      // Récupérer les variables de l'environnement
-      const variablesResponse = await fetch(`/api/environments/${selectedEnvironment}/variables`)
-      if (!variablesResponse.ok) {
-        throw new Error("Impossible de récupérer les variables")
-      }
-      const variables = await variablesResponse.json()
-
-      // Récupérer l'authentification sélectionnée
-      let auth = null
-      if (selectedAuthentication) {
-        const authResponse = await fetch(`/api/applications/${applicationId}/authentications/${selectedAuthentication}`)
-        if (!authResponse.ok) {
-          throw new Error("Impossible de récupérer l'authentification")
-        }
-        auth = await authResponse.json()
-      }
-
-      // Récupérer les APIs sélectionnées et les trier par ordre
+      await testSingleApi(apiToTestData, environmentId, authenticationId)
+    } else if (selectedApis.size > 0) {
+      // Tester plusieurs APIs sélectionnées
       const selectedApisList = apis
         .filter(api => selectedApis.has(api.id))
-        .sort((a, b) => a.order - b.order)
-
-      // Tester chaque API dans l'ordre
-      let overallStatus = "SUCCESS"
-      const results = []
-
-      for (const api of selectedApisList) {
-        try {
-          // Remplacer les variables dans l'URL
-          const url = replaceVariables(api.url, variables)
-
-          // Préparer les headers avec les variables remplacées et l'authentification
-          const headers: Record<string, string> = {
-            'apiKey': auth?.apiKey || '',
-            'token': auth?.token || ''
-          }
-          
-          // Ajouter les headers personnalisés de l'API
-          if (api.headers) {
-            Object.entries(api.headers).forEach(([key, value]) => {
-              headers[key] = replaceVariables(value, variables)
-            })
-          }
-
-          // Préparer le body avec les variables remplacées si nécessaire
-          let body = undefined
-          if (api.body) {
-            if (typeof api.body === 'string') {
-              body = replaceVariables(api.body, variables)
-            } else {
-              // Si le body est un objet, on remplace les variables dans chaque valeur
-              body = JSON.stringify(
-                Object.entries(api.body).reduce((acc, [key, value]) => ({
-                  ...acc,
-                  [key]: typeof value === 'string' ? replaceVariables(value, variables) : value
-                }), {})
-              )
-            }
-          }
-
-          const startTime = Date.now()
-
-          // Effectuer l'appel API via notre proxy
-          const apiResponse = await fetch('/api/test', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              url,
-              method: api.method,
-              headers,
-              body
-            })
-          })
-
-          const duration = Date.now() - startTime
-
-          const result = await apiResponse.json()
-          
-          // Ajouter le résultat
-          results.push({
-            apiId: api.id,
-            statusCode: result.status,
-            duration,
-            response: {
-              headers: result.headers,
-              data: result.data
-            },
-            error: result.status >= 400 ? result.statusText : null
-          })
-          
-          // Mettre à jour le statut global
-          if (result.status >= 400 && overallStatus === "SUCCESS") {
-            overallStatus = "PARTIAL"
-          }
-        } catch (error) {
-          console.error(`Erreur lors du test de l'API ${api.name}:`, error)
-          
-          // Ajouter un résultat d'erreur
-          results.push({
-            apiId: api.id,
-            statusCode: 500,
-            duration: 0,
-            response: {},
-            error: error instanceof Error ? error.message : "Une erreur est survenue"
-          })
-          
-          // Mettre à jour le statut global
-          if (overallStatus === "SUCCESS") {
-            overallStatus = "PARTIAL"
-          }
-        }
-      }
+        .map(api => ({
+          id: api.id,
+          name: api.name,
+          url: api.url,
+          method: api.method,
+          headers: api.headers,
+          body: api.body
+        }))
       
-      // Si tous les tests ont échoué, le statut global est "FAILED"
-      if (results.every(result => result.statusCode >= 400)) {
-        overallStatus = "FAILED"
-      }
-      
-      // Enregistrer les résultats des tests
-      const testResponse = await fetch('/api/tests', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          applicationId,
-          environmentId: selectedEnvironment,
-          authenticationId: selectedAuthentication,
-          duration: results.reduce((total, result) => total + result.duration, 0),
-          status: overallStatus,
-          results
-        })
+      await testApis({
+        apis: selectedApisList,
+        environmentId,
+        authenticationId
       })
-
-      if (!testResponse.ok) {
-        console.error("Erreur lors de l'enregistrement des tests:", await testResponse.text())
-        throw new Error("Erreur lors de l'enregistrement des tests")
-      }
-
-      // Récupérer l'ID du test créé
-      const testData = await testResponse.json()
-      
-      // Afficher un message de succès
-      toast({
-        title: "Tests terminés",
-        description: `${results.length} API(s) ont été testées.`,
-      })
-
-      // Fermer la boîte de dialogue
-      setIsTestDialogOpen(false)
-      
-      // Rediriger vers la page d'historique des tests avec l'ID du test
-      router.push(`/tests?testId=${testData.id}`)
-      
-    } catch (error) {
-      console.error('Erreur:', error)
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur est survenue lors des tests",
-      })
-    } finally {
-      setIsLoading(false)
     }
-  }
-
-  function handleTest() {
-    if (apiToTest) {
-      testApi(apiToTest.id)
-    } else {
-      testSelectedApis()
-    }
+    
+    // Fermer la boîte de dialogue après le test
+    setIsTestDialogOpen(false)
   }
 
   return (
@@ -526,197 +187,101 @@ export function ApiTable({
         )}
       </div>
 
-      <div className="rounded-md border">
+      <div className="border rounded-md">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[50px]">
+              <TableHead className="w-[40px]">
                 <Checkbox
                   checked={selectedApis.size === apis.length && apis.length > 0}
                   onCheckedChange={toggleAllApis}
+                  aria-label="Sélectionner toutes les APIs"
                 />
               </TableHead>
               <TableHead>Nom</TableHead>
               <TableHead>URL</TableHead>
               <TableHead>Méthode</TableHead>
-              <TableHead>Date de création</TableHead>
-              <TableHead className="w-[140px]">Actions</TableHead>
+              <TableHead className="w-[150px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {apis.map((api) => (
-              <TableRow key={api.id}>
-                <TableCell>
-                  <Checkbox
-                    checked={selectedApis.has(api.id)}
-                    onCheckedChange={() => toggleApiSelection(api.id)}
-                  />
-                </TableCell>
-                <TableCell className="font-medium">{api.name}</TableCell>
-                <TableCell>{api.url}</TableCell>
-                <TableCell>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium
-                    ${api.method === 'GET' ? 'bg-blue-100 text-blue-700' :
-                      api.method === 'POST' ? 'bg-green-100 text-green-700' :
-                      api.method === 'PUT' ? 'bg-yellow-100 text-yellow-700' :
-                      api.method === 'DELETE' ? 'bg-red-100 text-red-700' :
-                      'bg-gray-100 text-gray-700'
-                    }`}>
-                    {api.method}
-                  </span>
-                </TableCell>
-                <TableCell>{new Date(api.createdAt).toLocaleDateString()}</TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      title="Tester"
-                      disabled={isLoading}
-                      onClick={() => openTestDialog(api)}
-                    >
-                      <Play className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      title="Éditer"
-                      onClick={() => router.push(`/apis/${api.id}`)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                      title="Supprimer"
-                      onClick={() => setApiToDelete(api)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-            {apis.length === 0 && (
+            {apis.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-6 text-gray-500">
-                  Aucune API n'a été créée
+                <TableCell colSpan={5} className="text-center py-4">
+                  Aucune API trouvée
                 </TableCell>
               </TableRow>
+            ) : (
+              apis.map((api) => (
+                <TableRow key={api.id}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedApis.has(api.id)}
+                      onCheckedChange={() => toggleApiSelection(api.id)}
+                      aria-label={`Sélectionner ${api.name}`}
+                    />
+                  </TableCell>
+                  <TableCell>{api.name}</TableCell>
+                  <TableCell className="max-w-[300px] truncate">{api.url}</TableCell>
+                  <TableCell>{api.method}</TableCell>
+                  <TableCell>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => router.push(`/apis/${api.id}/edit`)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => openTestDialog(api)}
+                      >
+                        <Play className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setApiToDelete(api)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
             )}
           </TableBody>
         </Table>
       </div>
 
-      <AlertDialog open={!!apiToDelete} onOpenChange={() => setApiToDelete(null)}>
+      {/* Boîte de dialogue de confirmation de suppression */}
+      <AlertDialog open={!!apiToDelete} onOpenChange={(open) => !open && setApiToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+            <AlertDialogTitle>Êtes-vous sûr de vouloir supprimer cette API ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. Cela supprimera définitivement l'API
-              {apiToDelete?.name && ` "${apiToDelete.name}"`}.
+              Cette action est irréversible. L'API "{apiToDelete?.name}" sera définitivement supprimée.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-500 hover:bg-red-600"
-              onClick={() => apiToDelete && deleteApi(apiToDelete)}
-            >
-              Supprimer
-            </AlertDialogAction>
+            <AlertDialogAction onClick={() => apiToDelete && deleteApi(apiToDelete)}>Supprimer</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={isTestDialogOpen} onOpenChange={setIsTestDialogOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>
-              {apiToTest ? `Tester ${apiToTest.name}` : `Tester ${selectedApis.size} APIs`}
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Environnement</label>
-              <Select value={selectedEnvironment} onValueChange={setSelectedEnvironment}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un environnement" />
-                </SelectTrigger>
-                <SelectContent>
-                  {environments.map((env) => (
-                    <SelectItem key={env.id} value={env.id}>
-                      {env.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Authentification</label>
-              <Select value={selectedAuthentication} onValueChange={setSelectedAuthentication}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner une authentification" />
-                </SelectTrigger>
-                <SelectContent>
-                  {authentications.map((auth) => (
-                    <SelectItem key={auth.id} value={auth.id}>
-                      {auth.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {testResult && (
-              <div className="space-y-4 mt-4">
-                <div className="rounded-lg border p-4">
-                  <h3 className="text-sm font-medium mb-2">Résultat</h3>
-                  <div className="space-y-2">
-                    <div>
-                      <span className="font-medium">Status:</span>{' '}
-                      <span className={testResult.status >= 400 ? 'text-red-600' : 'text-green-600'}>
-                        {testResult.status} {testResult.statusText}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="font-medium">Headers:</span>
-                      <pre className="mt-1 text-sm bg-gray-50 p-2 rounded overflow-auto">
-                        {JSON.stringify(testResult.headers, null, 2)}
-                      </pre>
-                    </div>
-                    <div>
-                      <span className="font-medium">Response:</span>
-                      <pre className="mt-1 text-sm bg-gray-50 p-2 rounded overflow-auto">
-                        {typeof testResult.data === 'string' 
-                          ? testResult.data 
-                          : JSON.stringify(testResult.data, null, 2)}
-                      </pre>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsTestDialogOpen(false)}>
-              Fermer
-            </Button>
-            <Button 
-              onClick={handleTest}
-              disabled={isTestLoading}
-            >
-              {isTestLoading ? "Test en cours..." : "Tester"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Boîte de dialogue de test */}
+      <ApiTestDialog
+        open={isTestDialogOpen}
+        onOpenChange={setIsTestDialogOpen}
+        title={apiToTest ? `Tester l'API "${apiToTest.name}"` : `Tester ${selectedApis.size} API(s)`}
+        environments={environments}
+        authentications={authentications}
+        onTest={handleTest}
+        isLoading={isTestLoading}
+      />
     </>
   )
 } 

@@ -4,9 +4,24 @@ import { DraggableApiTable } from "@/app/collections/components/draggable-api-ta
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Plus } from "lucide-react"
+import { PageParams } from "@/types/next"
 
-export default async function CollectionDetailPage({ params }: { params: { id: string } }) {
-  const collectionId = params.id
+// Type pour les APIs avec les conversions nécessaires
+type ApiWithJsonValues = {
+  id: string
+  name: string
+  url: string
+  method: string
+  headers: any
+  body: any
+  order: number
+  createdAt: Date
+}
+
+export default async function CollectionDetailPage({ params }: PageParams<{ id: string }>) {
+  // Attendre les paramètres avant d'utiliser leurs propriétés
+  const awaitedParams = await params
+  const collectionId = awaitedParams.id
   
   const collection = await prisma.collection.findUnique({
     where: { id: collectionId },
@@ -42,6 +57,18 @@ export default async function CollectionDetailPage({ params }: { params: { id: s
     orderBy: { name: 'asc' },
   })
 
+  // Convertir les APIs pour qu'elles correspondent au type attendu
+  const formattedApis = collection.apis.map(api => ({
+    id: api.id,
+    name: api.name,
+    url: api.url,
+    method: api.method,
+    headers: api.headers as Record<string, string>,
+    body: api.body,
+    order: api.order,
+    createdAt: api.createdAt
+  }))
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -72,7 +99,7 @@ export default async function CollectionDetailPage({ params }: { params: { id: s
       </div>
 
       <DraggableApiTable 
-        apis={collection.apis} 
+        apis={formattedApis} 
         applicationId={collection.application.id}
         collectionId={collection.id}
         environments={environments}

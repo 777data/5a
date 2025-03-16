@@ -1,64 +1,73 @@
-import { prisma } from "@/lib/prisma"
-import { NextResponse } from "next/server"
-import { z } from "zod"
+import { NextRequest, NextResponse } from "next/server";
+import { testMultipleApis, ApiToTest, TestParams } from "@/app/services/api-test.service";
 
-const createTestResultSchema = z.object({
-  applicationId: z.string().min(1),
-  environmentId: z.string().min(1),
-  authenticationId: z.string().optional(),
-  duration: z.number().min(0),
-  status: z.enum(["SUCCESS", "PARTIAL", "FAILED"]),
-  results: z.array(z.object({
-    apiId: z.string().min(1),
-    statusCode: z.number(),
-    duration: z.number().min(0),
-    response: z.record(z.any()),
-    error: z.string().nullable()
-  }))
-})
-
-export async function POST(request: Request) {
+/**
+ * Route API pour tester des APIs
+ * Cette route permet de tester une ou plusieurs APIs
+ */
+export async function POST(request: NextRequest) {
   try {
-    const json = await request.json()
-    const body = createTestResultSchema.parse(json)
-
-    // Créer le test et ses résultats
-    const test = await prisma.apiTest.create({
-      data: {
-        applicationId: body.applicationId,
-        environmentId: body.environmentId,
-        authenticationId: body.authenticationId,
-        duration: body.duration,
-        status: body.status,
-        results: {
-          create: body.results.map(result => ({
-            apiId: result.apiId,
-            statusCode: result.statusCode,
-            duration: result.duration,
-            response: result.response,
-            error: result.error
-          }))
-        }
-      },
-      include: {
-        results: true
-      }
-    })
-
-    return NextResponse.json(test)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
+    // Récupérer les données de la requête
+    const data = await request.json();
+    const { applicationId, environmentId, authenticationId, apis, previousResponse } = data;
+    
+    // Vérifier que les données requises sont présentes
+    if (!applicationId) {
       return NextResponse.json(
-        { error: "Données invalides", details: error.flatten() },
+        { error: "L'ID de l'application est requis" },
         { status: 400 }
-      )
+      );
     }
-
-    console.error('[CREATE_TEST]', error)
+    
+    if (!environmentId) {
+      return NextResponse.json(
+        { error: "L'ID de l'environnement est requis" },
+        { status: 400 }
+      );
+    }
+    
+    if (!apis || !Array.isArray(apis) || apis.length === 0) {
+      return NextResponse.json(
+        { error: "Au moins une API est requise" },
+        { status: 400 }
+      );
+    }
+    
+    // Vérifier que chaque API a les propriétés requises
+    for (const api of apis) {
+      if (!api.id || !api.url || !api.method) {
+        return NextResponse.json(
+          { error: "Chaque API doit avoir un ID, une URL et une méthode" },
+          { status: 400 }
+        );
+      }
+    }
+    
+    console.log(`[API_TESTS] Test de ${apis.length} API(s) pour l'application ${applicationId}`);
+    
+    // Préparer les paramètres de test
+    const testParams: TestParams = {
+      applicationId,
+      environmentId,
+      authenticationId,
+      apis: apis as ApiToTest[],
+      previousResponse
+    };
+    
+    // Tester les APIs
+    const results = await testMultipleApis(testParams);
+    
+    console.log(`[API_TESTS] Test terminé avec le statut ${results.status}`);
+    
+    // Renvoyer les résultats
+    return NextResponse.json(results);
+  } catch (error) {
+    console.error(`[API_TESTS] Erreur lors du test des APIs:`, error);
+    
     return NextResponse.json(
-      { error: "Une erreur est survenue lors de l'enregistrement du test" },
+      { error: "Erreur lors du test des APIs" },
       { status: 500 }
-    )
+    );
   }
 }
 
