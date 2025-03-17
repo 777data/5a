@@ -6,6 +6,7 @@ import {
   testApis as testApisAction, 
   testSingleApi as testSingleApiAction, 
   testCollection as testCollectionAction,
+  resetLastResponse as resetLastResponseAction,
   redirectToTestResults
 } from '@/app/actions/api-test.action'
 
@@ -26,7 +27,6 @@ export function useApiTest({ applicationId }: ApiTestHookParams) {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [testResults, setTestResults] = useState<TestResults | null>(null)
-  const [lastResponse, setLastResponse] = useState<any>(null)
 
   /**
    * Teste une ou plusieurs APIs
@@ -35,7 +35,7 @@ export function useApiTest({ applicationId }: ApiTestHookParams) {
     apis, 
     environmentId, 
     authenticationId, 
-    previousResponse = lastResponse,
+    previousResponse,
     collectionId
   }: TestApiParams) => {
     if (!environmentId) {
@@ -101,13 +101,6 @@ export function useApiTest({ applicationId }: ApiTestHookParams) {
       const results = response.results!
       setTestResults(results)
 
-      // Stocker la dernière réponse pour les tests suivants
-      if (results.results.length > 0) {
-        const lastResult = results.results[results.results.length - 1]
-        setLastResponse(lastResult.response.data)
-        console.log("[USE_API_TEST] Dernière réponse mémorisée:", lastResult.response.data)
-      }
-
       // Afficher un message de succès
       toast({
         title: "Tests terminés",
@@ -150,7 +143,7 @@ export function useApiTest({ applicationId }: ApiTestHookParams) {
         api, 
         environmentId, 
         authenticationId, 
-        previousResponse || lastResponse,
+        previousResponse,
         applicationId
       )
       
@@ -160,13 +153,6 @@ export function useApiTest({ applicationId }: ApiTestHookParams) {
       
       const results = response.results!
       setTestResults(results)
-      
-      // Stocker la dernière réponse pour les tests suivants
-      if (results.results.length > 0) {
-        const lastResult = results.results[results.results.length - 1]
-        setLastResponse(lastResult.response.data)
-        console.log("[USE_API_TEST] Dernière réponse mémorisée:", lastResult.response.data)
-      }
       
       // Afficher un message de succès
       toast({
@@ -211,7 +197,7 @@ export function useApiTest({ applicationId }: ApiTestHookParams) {
         collectionId,
         environmentId,
         authenticationId,
-        previousResponse: previousResponse || lastResponse
+        previousResponse
       })
       
       if (!response.success) {
@@ -220,13 +206,6 @@ export function useApiTest({ applicationId }: ApiTestHookParams) {
       
       const results = response.results!
       setTestResults(results)
-      
-      // Stocker la dernière réponse pour les tests suivants
-      if (results.results.length > 0) {
-        const lastResult = results.results[results.results.length - 1]
-        setLastResponse(lastResult.response.data)
-        console.log("[USE_API_TEST] Dernière réponse mémorisée:", lastResult.response.data)
-      }
       
       // Afficher un message de succès
       toast({
@@ -256,15 +235,14 @@ export function useApiTest({ applicationId }: ApiTestHookParams) {
   /**
    * Réinitialise la dernière réponse mémorisée
    */
-  const resetLastResponse = () => {
-    setLastResponse(null)
+  const resetLastResponse = async () => {
+    await resetLastResponseAction(applicationId)
     console.log("[USE_API_TEST] Dernière réponse réinitialisée")
   }
 
   return {
     isLoading,
     testResults,
-    lastResponse,
     testApis,
     testSingleApi,
     testCollection,

@@ -57,6 +57,32 @@ type ApiTableProps = {
   onTestSelected?: (selectedIds: string[]) => void
 }
 
+// Composant pour afficher la méthode HTTP avec une couleur appropriée
+function MethodBadge({ method }: { method: string }) {
+  const getMethodColor = (method: string) => {
+    switch (method.toUpperCase()) {
+      case 'GET':
+        return 'bg-blue-100 text-blue-700 border-blue-200'
+      case 'POST':
+        return 'bg-green-100 text-green-700 border-green-200'
+      case 'PUT':
+        return 'bg-yellow-100 text-yellow-700 border-yellow-200'
+      case 'PATCH':
+        return 'bg-orange-100 text-orange-700 border-orange-200'
+      case 'DELETE':
+        return 'bg-red-100 text-red-700 border-red-200'
+      default:
+        return 'bg-gray-100 text-gray-700 border-gray-200'
+    }
+  }
+
+  return (
+    <span className={`px-2 py-1 rounded-md text-xs font-medium border ${getMethodColor(method)}`}>
+      {method.toUpperCase()}
+    </span>
+  )
+}
+
 export function ApiTable({ 
   apis, 
   applicationId, 
@@ -229,26 +255,34 @@ export function ApiTable({
                   </TableCell>
                   <TableCell>{api.name}</TableCell>
                   <TableCell className="max-w-[300px] truncate">{api.url}</TableCell>
-                  <TableCell>{api.method}</TableCell>
+                  <TableCell>
+                    <MethodBadge method={api.method} />
+                  </TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="icon"
+                        className="h-8 w-8"
+                        title="Éditer"
                         onClick={() => router.push(`/apis/${api.id}/edit`)}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="icon"
+                        className="h-8 w-8"
+                        title="Tester"
                         onClick={() => openTestDialog(api)}
                       >
                         <Play className="h-4 w-4" />
                       </Button>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="icon"
+                        className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        title="Supprimer"
                         onClick={() => setApiToDelete(api)}
                       >
                         <Trash2 className="h-4 w-4" />

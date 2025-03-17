@@ -9,7 +9,18 @@ type PageParams = {
   }
 }
 
+// Type correspondant à celui attendu par AuthenticationForm
+type FormattedAuthentication = {
+  id: string
+  name: string
+  token: string
+  apiKey: string
+}
+
 export default async function AuthenticationPage({ params }: PageParams) {
+  // Attendre les paramètres de route avant de les utiliser
+  const { id } = await params
+  
   const cookieStore = await cookies()
   const activeApplicationId = cookieStore.get('activeApplicationId')
 
@@ -17,7 +28,7 @@ export default async function AuthenticationPage({ params }: PageParams) {
     return (
       <div className="p-6">
         <div className="text-center text-sm text-gray-500 mt-4">
-          Veuillez sélectionner une application pour {params.id === 'new' ? 'créer' : 'modifier'} une authentification.
+          Veuillez sélectionner une application pour {id === 'new' ? 'créer' : 'modifier'} une authentification.
         </div>
       </div>
     )
@@ -31,18 +42,26 @@ export default async function AuthenticationPage({ params }: PageParams) {
     notFound()
   }
 
-  let authentication = null
-  if (params.id !== 'new') {
-    authentication = await prisma.authentication.findUnique({
-      where: { id: params.id },
+  let formattedAuthentication: FormattedAuthentication | null = null
+  if (id !== 'new') {
+    const authentication = await prisma.authentication.findUnique({
+      where: { id },
     })
 
     if (!authentication || authentication.applicationId !== activeApplicationId.value) {
       notFound()
     }
+    
+    // Formater l'authentification pour correspondre au type attendu
+    formattedAuthentication = {
+      id: authentication.id,
+      name: authentication.name,
+      token: authentication.token || "",
+      apiKey: authentication.apiKey || "",
+    }
   }
 
-  const title = params.id === 'new' ? 'Ajouter une authentification' : 'Modifier l\'authentification'
+  const title = id === 'new' ? 'Ajouter une authentification' : 'Modifier l\'authentification'
 
   return (
     <div className="p-6">
@@ -55,7 +74,7 @@ export default async function AuthenticationPage({ params }: PageParams) {
 
       <AuthenticationForm
         applicationId={application.id}
-        authentication={authentication}
+        authentication={formattedAuthentication}
       />
     </div>
   )

@@ -9,6 +9,34 @@ import {
 } from '@/app/services/api-test.service'
 import { prisma } from '@/lib/prisma'
 
+// Map pour stocker temporairement les réponses précédentes par application
+// Clé: ID d'application, Valeur: dernière réponse
+const applicationResponses = new Map<string, any>()
+
+/**
+ * Stocke la dernière réponse pour l'application
+ * @param applicationId ID de l'application
+ * @param response Réponse à stocker
+ */
+function storeLastResponse(applicationId: string, response: any): void {
+  applicationResponses.set(applicationId, response)
+  console.log(`[API_TEST_ACTION] Réponse stockée pour l'application ${applicationId.substring(0, 8)}...`)
+}
+
+/**
+ * Récupère la dernière réponse pour l'application
+ * @param applicationId ID de l'application
+ * @returns Dernière réponse ou null
+ */
+function getLastResponse(applicationId: string): any {
+  const response = applicationResponses.get(applicationId)
+  console.log(`[API_TEST_ACTION] Récupération de la réponse pour l'application ${applicationId.substring(0, 8)}...`, {
+    exists: !!response,
+    type: response ? typeof response : 'undefined'
+  })
+  return response || null
+}
+
 /**
  * Type pour les paramètres de test d'API
  */
@@ -79,6 +107,9 @@ export async function testApis(params: TestApiParams): Promise<TestActionRespons
         error: "Au moins une API est requise"
       }
     }
+    
+    // Utiliser la réponse précédente fournie ou celle stockée pour l'application
+    const previousResponse = params.previousResponse || getLastResponse(params.applicationId)
 
     // Tester les APIs
     const results = await testMultipleApis({
@@ -86,10 +117,16 @@ export async function testApis(params: TestApiParams): Promise<TestActionRespons
       environmentId: params.environmentId,
       authenticationId: params.authenticationId,
       apis: params.apis,
-      previousResponse: params.previousResponse
+      previousResponse
     })
 
     console.log(`[API_TEST_ACTION] Test terminé avec le statut ${results.status}`)
+
+    // Stocker la dernière réponse pour les tests suivants
+    if (results.results.length > 0) {
+      const lastResult = results.results[results.results.length - 1]
+      storeLastResponse(params.applicationId, lastResult.response.data)
+    }
 
     // Revalider le chemin des tests pour mettre à jour l'interface
     revalidatePath('/tests')
@@ -116,7 +153,7 @@ export async function testApis(params: TestApiParams): Promise<TestActionRespons
  * @param api L'API à tester
  * @param environmentId L'ID de l'environnement
  * @param authenticationId L'ID de l'authentification
- * @param previousResponse La réponse précédente
+ * @param previousResponse La réponse précédente (optionnel, utilisé seulement si fourni)
  * @param applicationId L'ID de l'application
  * @returns Les résultats du test
  */
@@ -219,6 +256,9 @@ export async function testCollection(params: TestCollectionParams): Promise<Test
         error: "La collection ne contient aucune API"
       }
     }
+    
+    // Utiliser la réponse précédente fournie ou celle stockée pour l'application
+    const previousResponse = params.previousResponse || getLastResponse(collection.application.id)
 
     // Préparer les APIs pour le test
     const apis: ApiToTest[] = collection.apis.map(api => ({
@@ -237,10 +277,16 @@ export async function testCollection(params: TestCollectionParams): Promise<Test
       environmentId: params.environmentId,
       authenticationId: params.authenticationId,
       apis,
-      previousResponse: params.previousResponse
+      previousResponse
     })
 
     console.log(`[API_TEST_ACTION] Test terminé avec le statut ${results.status}`)
+
+    // Stocker la dernière réponse pour les tests suivants
+    if (results.results.length > 0) {
+      const lastResult = results.results[results.results.length - 1]
+      storeLastResponse(collection.application.id, lastResult.response.data)
+    }
 
     // Revalider le chemin des tests pour mettre à jour l'interface
     revalidatePath('/tests')
@@ -260,6 +306,15 @@ export async function testCollection(params: TestCollectionParams): Promise<Test
       error: error instanceof Error ? error.message : "Erreur inconnue"
     }
   }
+}
+
+/**
+ * Réinitialise la dernière réponse mémorisée pour l'application
+ * @param applicationId ID de l'application
+ */
+export async function resetLastResponse(applicationId: string): Promise<void> {
+  applicationResponses.delete(applicationId)
+  console.log(`[API_TEST_ACTION] Réponse réinitialisée pour l'application ${applicationId.substring(0, 8)}...`)
 }
 
 /**

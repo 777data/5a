@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 
 type Application = {
   id: string
@@ -26,14 +26,17 @@ const LOCAL_STORAGE_KEY = 'selectedApplicationId'
 export function ApplicationSelector({ applications, selectedApplicationId: initialSelectedApplicationId }: ApplicationSelectorProps) {
   const router = useRouter()
   const { toast } = useToast()
+  const hasShownToast = useRef(false)
 
   // Effet pour charger l'application depuis le localStorage au démarrage
   useEffect(() => {
+    // Ne s'exécute qu'une seule fois au montage du composant
     if (!initialSelectedApplicationId && applications.length > 0) {
       const savedApplicationId = localStorage.getItem(LOCAL_STORAGE_KEY)
       if (savedApplicationId && applications.some(app => app.id === savedApplicationId)) {
         handleApplicationChange(savedApplicationId)
-      } else {
+      } else if (!hasShownToast.current) {
+        hasShownToast.current = true
         toast({
           variant: "destructive",
           title: "Sélection requise",
@@ -41,7 +44,7 @@ export function ApplicationSelector({ applications, selectedApplicationId: initi
         })
       }
     }
-  }, [])
+  }, [initialSelectedApplicationId, applications, toast]) // Ajout des dépendances manquantes
 
   const handleApplicationChange = async (applicationId: string) => {
     try {
@@ -76,17 +79,6 @@ export function ApplicationSelector({ applications, selectedApplicationId: initi
       })
     }
   }
-
-  // Si aucune application n'est sélectionnée, afficher un message d'erreur
-  useEffect(() => {
-    if (!initialSelectedApplicationId && applications.length > 0) {
-      toast({
-        variant: "destructive",
-        title: "Sélection requise",
-        description: "Veuillez sélectionner une application pour continuer.",
-      })
-    }
-  }, [initialSelectedApplicationId, applications.length])
 
   return (
     <Select

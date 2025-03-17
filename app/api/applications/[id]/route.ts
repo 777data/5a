@@ -43,10 +43,67 @@ export async function PUT(request: Request, { params }: Props) {
 
 export async function DELETE(_request: Request, { params }: Props) {
   try {
-    await prisma.application.delete({
-      where: {
-        id: params.id,
-      },
+    // Vérifier si l'application existe
+    const application = await prisma.application.findUnique({
+      where: { id: params.id },
+    })
+
+    if (!application) {
+      return NextResponse.json(
+        { error: "Application non trouvée" },
+        { status: 404 }
+      )
+    }
+
+    // Utiliser une transaction pour supprimer toutes les entités liées
+    await prisma.$transaction(async (tx) => {
+      // 1. Supprimer les résultats de tests d'API
+      await tx.apiTestResult.deleteMany({
+        where: {
+          apiTest: {
+            applicationId: params.id
+          }
+        }
+      })
+
+      // 2. Supprimer les tests d'API
+      await tx.apiTest.deleteMany({
+        where: { applicationId: params.id }
+      })
+
+      // 3. Supprimer les valeurs de variables d'environnement
+      await tx.variableValue.deleteMany({
+        where: {
+          environment: {
+            applicationId: params.id
+          }
+        }
+      })
+
+      // 4. Supprimer les environnements
+      await tx.environment.deleteMany({
+        where: { applicationId: params.id }
+      })
+
+      // 5. Supprimer les authentifications
+      await tx.authentication.deleteMany({
+        where: { applicationId: params.id }
+      })
+
+      // 6. Supprimer les APIs
+      await tx.api.deleteMany({
+        where: { applicationId: params.id }
+      })
+
+      // 7. Supprimer les collections
+      await tx.collection.deleteMany({
+        where: { applicationId: params.id }
+      })
+
+      // 8. Finalement, supprimer l'application
+      await tx.application.delete({
+        where: { id: params.id }
+      })
     })
 
     return new NextResponse(null, { status: 204 })

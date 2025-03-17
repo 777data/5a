@@ -22,9 +22,6 @@ export async function PUT(
         id: variableId,
         environmentId: environmentId,
       },
-      include: {
-        variable: true,
-      },
     })
 
     if (!existingValue) {
@@ -34,43 +31,32 @@ export async function PUT(
       )
     }
 
-    // Vérifier si le nouveau nom est déjà utilisé par une autre variable
-    if (body.name !== existingValue.variable.name) {
-      const existingVariable = await prisma.variable.findFirst({
+    // Vérifier si le nouveau nom est déjà utilisé par une autre variable dans le même environnement
+    if (body.name !== existingValue.name) {
+      const existingVariableWithSameName = await prisma.variableValue.findFirst({
         where: {
           name: body.name,
-          id: { not: existingValue.variable.id },
+          environmentId: environmentId,
+          id: { not: variableId },
         },
       })
 
-      if (existingVariable) {
+      if (existingVariableWithSameName) {
         return NextResponse.json(
-          { error: "Une variable avec ce nom existe déjà" },
+          { error: "Une variable avec ce nom existe déjà dans cet environnement" },
           { status: 400 }
         )
       }
-
-      // Mettre à jour le nom de la variable
-      await prisma.variable.update({
-        where: {
-          id: existingValue.variable.id,
-        },
-        data: {
-          name: body.name,
-        },
-      })
     }
 
-    // Mettre à jour la valeur
+    // Mettre à jour la valeur de variable
     const variableValue = await prisma.variableValue.update({
       where: {
         id: variableId,
       },
       data: {
+        name: body.name,
         value: body.value,
-      },
-      include: {
-        variable: true,
       },
     })
 

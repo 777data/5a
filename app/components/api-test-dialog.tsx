@@ -55,25 +55,41 @@ export function ApiTestDialog({
   const [selectedEnvironment, setSelectedEnvironment] = useState<string>('')
   const [selectedAuthentication, setSelectedAuthentication] = useState<string>('')
 
-  // Charger les préférences depuis le localStorage
+  // Charger les préférences depuis le localStorage et initialiser les sélections
   useEffect(() => {
-    const preferences = localStorage.getItem(STORAGE_KEY)
-    if (preferences) {
-      try {
-        const { environmentId, authenticationId } = JSON.parse(preferences)
-        setSelectedEnvironment(environmentId || '')
-        setSelectedAuthentication(authenticationId || '')
-      } catch (error) {
-        console.error('Erreur lors du chargement des préférences:', error)
+    // Fonction pour initialiser les sélections
+    const initializeSelections = () => {
+      // D'abord, essayer de charger depuis localStorage
+      const preferences = localStorage.getItem(STORAGE_KEY)
+      if (preferences) {
+        try {
+          const { environmentId, authenticationId } = JSON.parse(preferences)
+          if (environmentId) {
+            // Vérifier si l'environnement existe toujours dans la liste
+            const environmentExists = environments.some(env => env.id === environmentId)
+            if (environmentExists) {
+              setSelectedEnvironment(environmentId)
+            } else if (environments.length > 0) {
+              // Si l'environnement n'existe plus, sélectionner le premier disponible
+              setSelectedEnvironment(environments[0].id)
+            }
+          }
+          
+          if (authenticationId) {
+            setSelectedAuthentication(authenticationId)
+          }
+        } catch (error) {
+          console.error('Erreur lors du chargement des préférences:', error)
+        }
+      } else if (environments.length > 0) {
+        // Si aucune préférence n'est définie, sélectionner le premier environnement par défaut
+        setSelectedEnvironment(environments[0].id)
       }
     }
-    
-    // Si aucune préférence n'est définie mais qu'il y a des environnements disponibles,
-    // sélectionner le premier par défaut
-    if (!selectedEnvironment && environments.length > 0) {
-      setSelectedEnvironment(environments[0].id)
-    }
-  }, [environments, selectedEnvironment])
+
+    // Initialiser les sélections quand le composant est monté ou quand les environnements changent
+    initializeSelections()
+  }, [environments]) // Dépendance uniquement sur environments, pas sur selectedEnvironment
 
   // Sauvegarder les préférences dans le localStorage
   useEffect(() => {
