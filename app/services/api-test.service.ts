@@ -339,7 +339,10 @@ export async function testSingleApi(
     let responseData;
     const contentType = response.headers.get("content-type");
     
-    if (contentType?.includes("application/json")) {
+    // Pour les requêtes DELETE, on ne tente pas de lire le corps de la réponse
+    if (method === "DELETE") {
+      responseData = null;
+    } else if (contentType?.includes("application/json")) {
       try {
         responseData = await response.json();
       } catch (error) {

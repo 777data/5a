@@ -12,7 +12,7 @@ import { Select, SelectItem } from "@/components/ui/select";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "API Tester",
+  title: "5A",
   description: "Application de test d'APIs",
 };
 
