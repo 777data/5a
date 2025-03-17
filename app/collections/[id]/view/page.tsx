@@ -82,11 +82,6 @@ export default async function CollectionDetailPage({ params }: PageParams<{ id: 
           )}
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" asChild>
-            <Link href={`/collections/${collection.id}/edit`}>
-              Modifier
-            </Link>
-          </Button>
           <Button asChild>
             <Link 
               href={`/apis/new?collectionId=${collection.id}`}

@@ -199,7 +199,11 @@ export function CollectionTable({
               </TableRow>
             ) : (
               collections.map((collection) => (
-                <TableRow key={collection.id}>
+                <TableRow 
+                  key={collection.id}
+                  className="cursor-pointer"
+                  onClick={() => router.push(`/collections/${collection.id}/view`)}
+                >
                   <TableCell>
                     <Checkbox
                       checked={selectedCollections.has(collection.id)}
@@ -227,7 +231,6 @@ export function CollectionTable({
                         size="icon"
                         className="h-8 w-8"
                         title="Voir"
-                        onClick={() => router.push(`/collections/${collection.id}/view`)}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
