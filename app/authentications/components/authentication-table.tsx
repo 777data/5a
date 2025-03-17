@@ -99,18 +99,18 @@ export function AuthenticationTable({ authentications, applicationId }: Authenti
           <TableBody>
             {authentications.map((auth) => (
               <TableRow key={auth.id}>
-                <TableCell className="font-medium">{auth.name}</TableCell>
-                <TableCell>
+                <TableCell className="font-medium cursor-pointer" onClick={() => router.push(`/authentications/${auth.id}`)}>{auth.name}</TableCell>
+                <TableCell className="cursor-pointer" onClick={() => router.push(`/authentications/${auth.id}`)}>
                   <code className="bg-gray-100 px-2 py-1 rounded">
                     {auth.token.substring(0, 8)}...
                   </code>
                 </TableCell>
-                <TableCell>
+                <TableCell className="cursor-pointer" onClick={() => router.push(`/authentications/${auth.id}`)}>
                   <code className="bg-gray-100 px-2 py-1 rounded">
                     {auth.apiKey.substring(0, 8)}...
                   </code>
                 </TableCell>
-                <TableCell>{new Date(auth.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell className="cursor-pointer" onClick={() => router.push(`/authentications/${auth.id}`)}>{new Date(auth.createdAt).toLocaleDateString()}</TableCell>
                 <TableCell>
                   <div className="flex gap-2">
                     <Button

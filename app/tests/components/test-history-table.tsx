@@ -126,7 +126,10 @@ export function TestHistoryTable({ tests }: TestHistoryTableProps) {
         <TableBody>
           {testsWithRecalculatedStatus.map((test) => (
             <Fragment key={test.id}>
-              <TableRow id={`test-${test.id}`}>
+              <TableRow 
+                className="cursor-pointer hover:bg-gray-50"
+                onClick={() => toggleExpand(test.id)}
+              >
                 <TableCell className="px-4 py-3">
                   {new Date(test.startedAt).toLocaleDateString()} {new Date(test.startedAt).toLocaleTimeString()}
                   <div className="text-xs text-gray-500">

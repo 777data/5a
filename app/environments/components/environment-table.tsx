@@ -90,7 +90,11 @@ export function EnvironmentTable({ environments }: EnvironmentTableProps) {
           </TableHeader>
           <TableBody>
             {environments.map((environment) => (
-              <TableRow key={environment.id}>
+              <TableRow 
+                key={environment.id}
+                className="cursor-pointer"
+                onClick={() => router.push(`/environments/${environment.id}/variables`)}
+              >
                 <TableCell className="font-medium">{environment.name}</TableCell>
                 <TableCell>
                   <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
@@ -105,7 +109,6 @@ export function EnvironmentTable({ environments }: EnvironmentTableProps) {
                       size="icon"
                       className="h-8 w-8"
                       title="Valeurs des variables"
-                      onClick={() => router.push(`/environments/${environment.id}/variables`)}
                     >
                       <svg
                         className="h-4 w-4"
@@ -147,7 +150,10 @@ export function EnvironmentTable({ environments }: EnvironmentTableProps) {
                       size="icon"
                       className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
                       title="Supprimer"
-                      onClick={() => setEnvironmentToDelete(environment)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setEnvironmentToDelete(environment)
+                      }}
                       disabled={isLoading}
                     >
                       <svg
@@ -192,7 +198,10 @@ export function EnvironmentTable({ environments }: EnvironmentTableProps) {
             <AlertDialogCancel>Annuler</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-500 hover:bg-red-600"
-              onClick={() => environmentToDelete && deleteEnvironment(environmentToDelete)}
+              onClick={(e) => {
+                e.stopPropagation()
+                environmentToDelete && deleteEnvironment(environmentToDelete)
+              }}
             >
               Supprimer
             </AlertDialogAction>
