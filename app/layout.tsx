@@ -39,15 +39,16 @@ export default async function RootLayout({
       <body className={inter.className}>
         <div className="flex h-screen">
           {/* Sidebar */}
-          <aside className="w-64 border-r bg-white">
-            <div className="flex h-16 items-center justify-center">
-              <Link href="/" className="flex flex-col items-center">
-                <div className="flex flex-col items-center">
+          <aside className="w-64 border-r bg-[#D6CFC1]">
+            <div className="flex h-20 items-center justify-center bg-[#D6CFC1]">
+              <Link href="/" className="flex flex-col items-center w-full">
+                <div className="flex flex-col items-center w-full px-4 pt-4">
                   <Image 
                     src="/AAAAA.png" 
                     alt="AAAAA" 
-                    width={80} 
-                    height={40} 
+                    width={200} 
+                    height={100} 
+                    className="w-full h-auto"
                     priority
                   />
                 </div>
@@ -56,7 +57,7 @@ export default async function RootLayout({
             <nav className="flex flex-col gap-1 p-4">
               <Link
                 href="/collections"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-colors hover:text-gray-900 hover:bg-gray-100"
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 transition-colors hover:text-gray-900 hover:bg-[#E0D9CB]"
               >
                 <svg
                   className="h-4 w-4"
@@ -75,7 +76,7 @@ export default async function RootLayout({
               </Link>
               <Link
                 href="/environments"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-colors hover:text-gray-900 hover:bg-gray-100"
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 transition-colors hover:text-gray-900 hover:bg-[#E0D9CB]"
               >
                 <svg
                   className="h-4 w-4"
@@ -94,7 +95,7 @@ export default async function RootLayout({
               </Link>
               <Link
                 href="/authentications"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-colors hover:text-gray-900 hover:bg-gray-100"
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 transition-colors hover:text-gray-900 hover:bg-[#E0D9CB]"
               >
                 <svg
                   className="h-4 w-4"
@@ -113,7 +114,7 @@ export default async function RootLayout({
               </Link>
               <Link
                 href="/tests"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-colors hover:text-gray-900 hover:bg-gray-100"
+                className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 transition-colors hover:text-gray-900 hover:bg-[#E0D9CB]"
               >
                 <svg
                   className="h-4 w-4"
@@ -133,7 +134,7 @@ export default async function RootLayout({
               <div className="mt-auto">
                 <Link
                   href="/applications"
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-colors hover:text-gray-900 hover:bg-gray-100"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-gray-700 transition-colors hover:text-gray-900 hover:bg-[#E0D9CB]"
                 >
                   <svg
                     className="h-4 w-4"
