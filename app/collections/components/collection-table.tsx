@@ -25,7 +25,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { useApiTest } from "@/app/hooks/use-api-test"
 import { ApiTestDialog } from "@/app/components/api-test-dialog"
-import { Edit, Play, Trash2 } from "lucide-react"
+import { Edit, Play, Trash2, Copy } from "lucide-react"
 
 type Collection = {
   id: string
@@ -101,6 +101,33 @@ export function CollectionTable({
     } finally {
       setIsLoading(false)
       setCollectionToDelete(null)
+    }
+  }
+
+  async function duplicateCollection(collection: Collection) {
+    try {
+      const response = await fetch(`/api/collections/${collection.id}/duplicate`, {
+        method: 'POST',
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Une erreur est survenue')
+      }
+
+      toast({
+        title: "Collection dupliquée",
+        description: `La collection "${collection.name}" a été dupliquée avec succès.`,
+      })
+
+      router.refresh()
+    } catch (error) {
+      console.error('Erreur:', error)
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors de la duplication",
+      })
     }
   }
 
@@ -208,6 +235,9 @@ export function CollectionTable({
                     <Checkbox
                       checked={selectedCollections.has(collection.id)}
                       onCheckedChange={() => toggleCollectionSelection(collection.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
                       aria-label={`Sélectionner ${collection.name}`}
                     />
                   </TableCell>
@@ -238,6 +268,18 @@ export function CollectionTable({
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
+                        title="Dupliquer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          duplicateCollection(collection);
+                        }}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
                         title="Tester"
                         onClick={() => {
                           setSelectedCollections(new Set([collection.id]))
@@ -251,7 +293,10 @@ export function CollectionTable({
                         size="icon"
                         className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
                         title="Supprimer"
-                        onClick={() => setCollectionToDelete(collection)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCollectionToDelete(collection);
+                        }}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

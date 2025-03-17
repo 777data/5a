@@ -3,7 +3,7 @@ import { notFound } from "next/navigation"
 import { DraggableApiTable } from "@/app/collections/components/draggable-api-table"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { Plus } from "lucide-react"
+import { Plus, Edit } from "lucide-react"
 import { PageParams } from "@/types/next"
 
 // Type pour les APIs avec les conversions nécessaires
@@ -82,6 +82,12 @@ export default async function CollectionDetailPage({ params }: PageParams<{ id: 
           )}
         </div>
         <div className="flex gap-2">
+          <Button asChild variant="outline">
+            <Link href={`/collections/${collection.id}/edit`}>
+              <Edit className="h-4 w-4 mr-2" />
+              Modifier
+            </Link>
+          </Button>
           <Button asChild>
             <Link 
               href={`/apis/new?collectionId=${collection.id}`}
