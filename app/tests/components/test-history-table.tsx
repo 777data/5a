@@ -126,7 +126,7 @@ export function TestHistoryTable({ tests }: TestHistoryTableProps) {
         <TableBody>
           {testsWithRecalculatedStatus.map((test) => (
             <Fragment key={test.id}>
-              <TableRow 
+              <TableRow
                 className="cursor-pointer hover:bg-gray-50"
                 onClick={() => toggleExpand(test.id)}
               >
@@ -158,7 +158,7 @@ export function TestHistoryTable({ tests }: TestHistoryTableProps) {
                     {test._count.results} API{test._count.results > 1 ? "s" : ""}
                   </div>
                 </TableCell>
-                <TableCell className="px-4 py-3">
+                <TableCell className="px-4 py-3 w-[140px]">
                   <div className="flex gap-2">
                     <Button
                       variant="ghost"
@@ -214,15 +214,13 @@ export function TestHistoryTable({ tests }: TestHistoryTableProps) {
                               </span>
                               <span className="font-medium">{result.api.name}</span>
                             </div>
-                            <div className="flex items-center gap-4">
-                              <span className="text-sm text-gray-500">{(result.duration / 1000).toFixed(2)}s</span>
-                              <Badge
-                                className={`px-2 py-1 rounded-full text-xs font-medium
-                                  ${result.statusCode < 400 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
-                              >
-                                {result.statusCode}
-                              </Badge>
-                            </div>
+                            <span className="text-sm text-gray-500">{(result.duration / 1000).toFixed(2)}s</span>
+                            <Badge
+                              className={`px-2 py-1 rounded-full text-xs font-medium
+                                ${result.statusCode < 400 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
+                            >
+                              {result.statusCode}
+                            </Badge>
                           </div>
                         ))}
                       </div>

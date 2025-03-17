@@ -165,15 +165,38 @@ export function CollectionTable({
     }
 
     try {
-      // Tester chaque collection sélectionnée une par une
-      for (const collectionId of selectedCollections) {
-        console.log(`[COLLECTION_TABLE] Test de la collection ${collectionId}`)
-        // Appeler la fonction testCollection du hook qui utilise maintenant la Server Action
-        await testCollection(collectionId, environmentId, authenticationId)
+      // Créer un tableau des IDs de collections sélectionnées
+      const collectionIds = Array.from(selectedCollections)
+      console.log(`[COLLECTION_TABLE] Test des collections ${collectionIds.join(', ')}`)
+      
+      // Stocker l'ID du premier test réussi pour la redirection
+      let firstTestId = null
+      
+      // Tester chaque collection séquentiellement
+      for (const collectionId of collectionIds) {
+        const result = await testCollection(collectionId, environmentId, authenticationId)
+        
+        // Stocker l'ID du premier test réussi
+        if (result && result.testId && !firstTestId) {
+          firstTestId = result.testId
+        }
       }
       
-      // Fermer la boîte de dialogue après le test
+      // Fermer la boîte de dialogue après tous les tests
       setIsTestDialogOpen(false)
+      
+      // Afficher un message de succès
+      toast({
+        title: "Tests terminés",
+        description: `${collectionIds.length} collection(s) ont été testées avec succès.`,
+      })
+      
+      // Rediriger vers la page des tests avec l'ID du premier test
+      if (firstTestId) {
+        router.push(`/tests?testId=${firstTestId}`)
+      } else {
+        router.push('/tests')
+      }
     } catch (error) {
       console.error('[COLLECTION_TABLE] Erreur lors du test des collections:', error)
       toast({

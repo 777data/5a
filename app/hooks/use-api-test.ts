@@ -112,7 +112,11 @@ export function useApiTest({ applicationId }: ApiTestHookParams) {
         router.push(`/tests?testId=${response.testId}`)
       }
 
-      return results
+      // Retourner les résultats et l'ID du test
+      return {
+        results,
+        testId: response.testId
+      }
     } catch (error) {
       console.error('[USE_API_TEST] Erreur lors du test des APIs:', error)
       toast({
@@ -218,7 +222,11 @@ export function useApiTest({ applicationId }: ApiTestHookParams) {
         router.push(`/tests?testId=${response.testId}`)
       }
       
-      return results
+      // Retourner les résultats et l'ID du test
+      return {
+        results,
+        testId: response.testId
+      }
     } catch (error) {
       console.error('[USE_API_TEST] Erreur lors du test de la collection:', error)
       toast({
