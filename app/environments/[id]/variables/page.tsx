@@ -3,15 +3,11 @@ import { notFound } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { VariableTable } from "./components/variable-table"
+import { PageParams } from "@/types/next"
 
-type PageParams = {
-  params: {
-    id: string
-  }
-}
-
-export default async function EnvironmentVariablesPage({ params }: PageParams) {
-  const environmentId = await params.id
+export default async function EnvironmentVariablesPage({ params }: PageParams<{ id: string }>) {
+  // Attendre les paramètres avant de les utiliser
+  const { id: environmentId } = await params
 
   const environment = await prisma.environment.findUnique({
     where: { id: environmentId },

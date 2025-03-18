@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma"
 import { CollectionForm } from "../../components/collection-form"
 import { notFound } from "next/navigation"
+import { PageParams } from "@/types/next"
 
-export default async function EditCollectionPage({ params }: { params: { id: string } }) {
+export default async function EditCollectionPage({ params }: PageParams<{ id: string }>) {
   // Attendre les paramètres de route avant de les utiliser
   const { id: collectionId } = await params
   

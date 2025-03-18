@@ -2,12 +2,9 @@ import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { ApiForm } from "../../components/api-form"
+import { PageParams } from "@/types/next"
 
-export default async function EditApiPage({
-  params,
-}: {
-  params: { id: string }
-}) {
+export default async function EditApiPage({ params }: PageParams<{ id: string }>) {
   // Attendre les paramètres de route avant de les utiliser
   const { id } = await params
   

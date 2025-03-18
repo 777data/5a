@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ExecutionTimeChart } from "./components/execution-time-chart";
 
-export default async function DashboardPage() {
+export default async function DashboardPage() {  
   const cookieStore = await cookies();
   const activeApplicationId = cookieStore.get("activeApplicationId")?.value;
 

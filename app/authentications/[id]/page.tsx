@@ -2,12 +2,7 @@ import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { AuthenticationForm } from "../components/authentication-form"
-
-type PageParams = {
-  params: {
-    id: string
-  }
-}
+import { PageParams } from "@/types/next"
 
 // Type correspondant à celui attendu par AuthenticationForm
 type FormattedAuthentication = {
@@ -17,7 +12,7 @@ type FormattedAuthentication = {
   apiKey: string
 }
 
-export default async function AuthenticationPage({ params }: PageParams) {
+export default async function AuthenticationPage({ params }: PageParams<{ id: string }>) {
   // Attendre les paramètres de route avant de les utiliser
   const { id } = await params
   

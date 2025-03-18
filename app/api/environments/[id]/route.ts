@@ -6,11 +6,13 @@ const updateEnvironmentSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
 })
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: Request) {
   try {
+    // Extraire les paramètres de l'URL
+    const url = new URL(request.url);
+    const segments = url.pathname.split('/');
+    const id = segments[segments.indexOf("environments") + 1];
+    
     const body = await request.json()
     const validation = updateEnvironmentSchema.safeParse(body)
 
@@ -22,7 +24,7 @@ export async function PUT(
     }
 
     const environment = await prisma.environment.update({
-      where: { id: params.id },
+      where: { id },
       data: validation.data,
     })
 
@@ -36,22 +38,24 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request) {
   try {
+    // Extraire les paramètres de l'URL
+    const url = new URL(request.url);
+    const segments = url.pathname.split('/');
+    const id = segments[segments.indexOf("environments") + 1];
+    
     // Supprime d'abord toutes les valeurs de variables associées
     await prisma.variableValue.deleteMany({
       where: {
-        environmentId: params.id
+        environmentId: id
       }
     })
 
     // Puis supprime l'environnement
     await prisma.environment.delete({
       where: {
-        id: params.id
+        id
       }
     })
 

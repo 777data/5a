@@ -27,8 +27,8 @@ import { useToast } from "@/hooks/use-toast"
 type Authentication = {
   id: string
   name: string
-  token: string
-  apiKey: string
+  token: string | null
+  apiKey: string | null
   createdAt: string
   updatedAt: string
 }
@@ -99,12 +99,12 @@ export function AuthenticationTable({ authentications, applicationId }: Authenti
                 <TableCell className="font-medium cursor-pointer" onClick={() => router.push(`/authentications/${auth.id}`)}>{auth.name}</TableCell>
                 <TableCell className="cursor-pointer" onClick={() => router.push(`/authentications/${auth.id}`)}>
                   <code className="bg-gray-100 px-2 py-1 rounded">
-                    {auth.token.substring(0, 8)}...
+                    {auth.token ? auth.token.substring(0, 8) + '...' : 'N/A'}
                   </code>
                 </TableCell>
                 <TableCell className="cursor-pointer" onClick={() => router.push(`/authentications/${auth.id}`)}>
                   <code className="bg-gray-100 px-2 py-1 rounded">
-                    {auth.apiKey.substring(0, 8)}...
+                    {auth.apiKey ? auth.apiKey.substring(0, 8) + '...' : 'N/A'}
                   </code>
                 </TableCell>
                 <TableCell className="cursor-pointer" onClick={() => router.push(`/authentications/${auth.id}`)}>{new Date(auth.createdAt).toLocaleDateString()}</TableCell>

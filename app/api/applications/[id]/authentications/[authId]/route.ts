@@ -8,12 +8,13 @@ const updateAuthenticationSchema = z.object({
   apiKey: z.string().min(1),
 })
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string; authId: string } }
-) {
+export async function GET(request: Request) {
   try {
-    const { id: applicationId, authId } = params
+    // Extraire les paramètres de l'URL
+    const url = new URL(request.url);
+    const segments = url.pathname.split('/');
+    const applicationId = segments[segments.indexOf("applications") + 1];
+    const authId = segments[segments.indexOf("authentications") + 2];
 
     // Vérifier si l'authentification existe
     const authentication = await prisma.authentication.findUnique({
@@ -40,14 +41,16 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string; authId: string } }
-) {
+export async function PUT(request: Request) {
   try {
+    // Extraire les paramètres de l'URL
+    const url = new URL(request.url);
+    const segments = url.pathname.split('/');
+    const applicationId = segments[segments.indexOf("applications") + 1];
+    const authId = segments[segments.indexOf("authentications") + 2];
+    
     const json = await request.json()
     const body = updateAuthenticationSchema.parse(json)
-    const { id: applicationId, authId } = params
 
     // Vérifier si l'authentification existe
     const existingAuth = await prisma.authentication.findUnique({
@@ -110,12 +113,13 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string; authId: string } }
-) {
+export async function DELETE(request: Request) {
   try {
-    const { id: applicationId, authId } = params
+    // Extraire les paramètres de l'URL
+    const url = new URL(request.url);
+    const segments = url.pathname.split('/');
+    const applicationId = segments[segments.indexOf("applications") + 1];
+    const authId = segments[segments.indexOf("authentications") + 2];
 
     // Vérifier si l'authentification existe
     const authentication = await prisma.authentication.findUnique({

@@ -1,7 +1,8 @@
 import { CollectionForm } from "../components/collection-form"
 import { redirect } from "next/navigation"
+import { PageParams } from "@/types/next"
 
-export default async function CollectionPage({ params }: { params: { id: string } }) {
+export default async function CollectionPage({ params }: PageParams<{ id: string }>) {
   // Attendre les paramètres de route avant de les utiliser
   const { id: collectionId } = await params
   

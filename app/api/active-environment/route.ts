@@ -6,7 +6,8 @@ export async function PUT(request: Request) {
     const { environmentId } = await request.json()
     
     // Stocke l'ID de l'environnement actif dans un cookie
-    cookies().set('activeEnvironmentId', environmentId, {
+    const cookieStore = await cookies()
+    cookieStore.set('activeEnvironmentId', environmentId, {
       httpOnly: true,
       path: '/',
       sameSite: 'lax',
@@ -25,7 +26,8 @@ export async function PUT(request: Request) {
 
 export async function GET() {
   try {
-    const activeEnvironmentId = cookies().get('activeEnvironmentId')
+    const cookieStore = await cookies()
+    const activeEnvironmentId = cookieStore.get('activeEnvironmentId')
 
     return NextResponse.json({ environmentId: activeEnvironmentId?.value || null })
   } catch (error) {

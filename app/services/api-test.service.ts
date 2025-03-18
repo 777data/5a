@@ -514,13 +514,14 @@ export async function testMultipleApis(params: TestParams): Promise<TestResults>
           status: overallStatus,
           results: {
             create: results.map(result => ({
-              apiId: result.apiId,
+              api: {
+                connect: {
+                  id: result.apiId
+                }
+              },
               statusCode: result.statusCode,
               duration: result.duration,
-              response: {
-                headers: result.response.headers,
-                data: result.response.data
-              },
+              response: JSON.parse(JSON.stringify(result.response)),
               error: result.error
             }))
           }

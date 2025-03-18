@@ -35,6 +35,12 @@ export default async function AuthenticationsPage() {
     notFound()
   }
 
+  const formattedAuthentications = application.authentications.map(auth => ({
+    ...auth,
+    createdAt: auth.createdAt.toISOString(),
+    updatedAt: auth.updatedAt.toISOString()
+  }))
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -53,7 +59,7 @@ export default async function AuthenticationsPage() {
       </div>
 
       <AuthenticationTable
-        authentications={application.authentications}
+        authentications={formattedAuthentications}
         applicationId={application.id}
       />
     </div>

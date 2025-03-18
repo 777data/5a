@@ -8,14 +8,15 @@ const createAuthenticationSchema = z.object({
   apiKey: z.string().min(1),
 })
 
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: Request) {
   try {
+    // Extraire les paramètres de l'URL
+    const url = new URL(request.url);
+    const segments = url.pathname.split('/');
+    const applicationId = segments[segments.indexOf("applications") + 1];
+    
     const json = await request.json()
     const body = createAuthenticationSchema.parse(json)
-    const applicationId = params.id
 
     // Vérifier si l'application existe
     const application = await prisma.application.findUnique({

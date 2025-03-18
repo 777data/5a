@@ -128,7 +128,7 @@ export async function testApis(params: TestApiParams): Promise<TestActionRespons
     // Stocker la dernière réponse pour les tests suivants
     if (results.results.length > 0) {
       const lastResult = results.results[results.results.length - 1]
-      storeLastResponse(params.applicationId, lastResult.response.data)
+      storeLastResponse(params.applicationId, lastResult.response.data as ApiResponseData)
     }
 
     // Revalider le chemin des tests pour mettre à jour l'interface
@@ -288,7 +288,7 @@ export async function testCollection(params: TestCollectionParams): Promise<Test
     // Stocker la dernière réponse pour les tests suivants
     if (results.results.length > 0) {
       const lastResult = results.results[results.results.length - 1]
-      storeLastResponse(collection.application.id, lastResult.response.data)
+      storeLastResponse(collection.application.id, lastResult.response.data as ApiResponseData)
     }
 
     // Revalider le chemin des tests pour mettre à jour l'interface

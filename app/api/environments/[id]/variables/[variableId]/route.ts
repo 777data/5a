@@ -7,14 +7,16 @@ const updateVariableValueSchema = z.object({
   value: z.string().min(1),
 })
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string; variableId: string } }
-) {
+export async function PUT(request: Request) {
   try {
+    // Extraire les paramètres de l'URL
+    const url = new URL(request.url);
+    const segments = url.pathname.split('/');
+    const environmentId = segments[segments.indexOf("environments") + 1];
+    const variableId = segments[segments.indexOf("variables") + 2];
+    
     const json = await request.json()
     const body = updateVariableValueSchema.parse(json)
-    const { id: environmentId, variableId } = params
 
     // Vérifier si la valeur de variable existe
     const existingValue = await prisma.variableValue.findUnique({
@@ -77,12 +79,13 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string; variableId: string } }
-) {
+export async function DELETE(request: Request) {
   try {
-    const { id: environmentId, variableId } = params
+    // Extraire les paramètres de l'URL
+    const url = new URL(request.url);
+    const segments = url.pathname.split('/');
+    const environmentId = segments[segments.indexOf("environments") + 1];
+    const variableId = segments[segments.indexOf("variables") + 2];
 
     // Vérifier si la variable existe pour cet environnement
     const variableValue = await prisma.variableValue.findUnique({

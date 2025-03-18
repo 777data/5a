@@ -1,17 +1,15 @@
 import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { ApplicationForm } from "../components/application-form"
+import { PageParams } from "@/types/next"
 
-type Props = {
-  params: {
-    id: string
-  }
-}
-
-export default async function EditApplicationPage({ params }: Props) {
+export default async function EditApplicationPage({ params }: PageParams<{ id: string }>) {
+  // Attendre les paramètres avant de les utiliser
+  const { id } = await params
+  
   const application = await prisma.application.findUnique({
     where: {
-      id: params.id,
+      id,
     },
   })
 

@@ -1,15 +1,15 @@
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import { ApiForm } from "../components/api-form"
+import { PageParams } from "@/types/next"
 
-export default async function NewApiPage({
-  searchParams = {},
-}: {
-  searchParams?: { collectionId?: string }
-}) {
+export default async function NewApiPage(props: PageParams) {
+  // Attendre les paramètres avant de les utiliser
+  const searchParams = await props.searchParams
+  const collectionId = searchParams.collectionId as string | undefined
+  
   const cookieStore = await cookies()
   const activeApplicationId = cookieStore.get('activeApplicationId')?.value
-  const collectionId = searchParams.collectionId
 
   if (!activeApplicationId) {
     redirect('/collections')

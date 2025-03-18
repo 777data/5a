@@ -11,17 +11,19 @@ const apiSchema = z.object({
   collectionId: z.string().nullable().optional(),
 })
 
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: Request) {
   try {
-    const json = await request.json()
-    const body = apiSchema.parse(json)
+    // Extraire les paramètres de l'URL
+    const url = new URL(request.url);
+    const segments = url.pathname.split('/');
+    const id = segments[segments.indexOf("applications") + 1];
+    
+    const json = await request.json();
+    const body = apiSchema.parse(json);
 
     // Vérifier si l'application existe
     const application = await prisma.application.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!application) {
@@ -36,7 +38,7 @@ export async function POST(
       const collection = await prisma.collection.findFirst({
         where: {
           id: body.collectionId,
-          applicationId: params.id,
+          applicationId: id,
         },
       })
 
@@ -56,7 +58,7 @@ export async function POST(
         method: body.method,
         headers: body.headers,
         body: body.body,
-        applicationId: params.id,
+        applicationId: id,
         collectionId: body.collectionId || null,
       },
     })

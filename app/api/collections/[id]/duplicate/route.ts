@@ -1,14 +1,17 @@
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: Request) {
   try {
+    // Extraire les paramètres de l'URL
+    const url = new URL(request.url);
+    const segments = url.pathname.split('/');
+    const id = segments[segments.indexOf("collections") + 1];
+    
     // Récupérer la collection originale avec ses APIs
     const originalCollection = await prisma.collection.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         apis: true,
       },
@@ -33,18 +36,20 @@ export async function POST(
 
     // Dupliquer toutes les APIs de la collection originale
     if (originalCollection.apis.length > 0) {
-      await prisma.api.createMany({
-        data: originalCollection.apis.map(api => ({
-          name: api.name,
-          url: api.url,
-          method: api.method,
-          headers: api.headers,
-          body: api.body,
-          order: api.order,
-          applicationId: api.applicationId,
-          collectionId: newCollection.id,
-        })),
-      })
+      for (const api of originalCollection.apis) {
+        await prisma.api.create({
+          data: {
+            name: api.name,
+            url: api.url,
+            method: api.method,
+            headers: api.headers as Prisma.InputJsonValue,
+            body: api.body as Prisma.InputJsonValue,
+            order: api.order,
+            applicationId: api.applicationId,
+            collectionId: newCollection.id,
+          },
+        });
+      }
     }
 
     return NextResponse.json(newCollection)

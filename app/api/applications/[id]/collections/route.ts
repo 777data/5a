@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request) {
   try {
-    const applicationId = params.id
+    // Extraire les paramètres de l'URL
+    const url = new URL(request.url);
+    const segments = url.pathname.split('/');
+    const applicationId = segments[segments.indexOf("applications") + 1];
 
     const collections = await prisma.collection.findMany({
       where: { applicationId },

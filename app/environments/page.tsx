@@ -35,6 +35,12 @@ export default async function EnvironmentsPage() {
               variableValues: true,
             },
           },
+          application: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       },
     },

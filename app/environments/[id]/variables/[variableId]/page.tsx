@@ -1,16 +1,11 @@
 import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { VariableForm } from "../components/variable-form"
+import { PageParams } from "@/types/next"
 
-type PageParams = {
-  params: {
-    id: string
-    variableId: string
-  }
-}
-
-export default async function VariablePage({ params }: PageParams) {
-  const { id: environmentId, variableId } = params
+export default async function VariablePage({ params }: PageParams<{ id: string, variableId: string }>) {
+  // Attendre les paramètres avant de les utiliser
+  const { id: environmentId, variableId } = await params
 
   // Vérifier si l'environnement existe
   const environment = await prisma.environment.findUnique({

@@ -8,16 +8,18 @@ const updateCollectionSchema = z.object({
   color: z.string().regex(/^#([0-9A-F]{3}){1,2}$/i).optional(),
 })
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: Request) {
   try {
+    // Extraire les paramètres de l'URL
+    const url = new URL(request.url);
+    const segments = url.pathname.split('/');
+    const id = segments[segments.indexOf("collections") + 1];
+    
     const json = await request.json()
     const body = updateCollectionSchema.parse(json)
 
     const collection = await prisma.collection.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name: body.name,
         description: body.description,
@@ -42,20 +44,22 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request) {
   try {
+    // Extraire les paramètres de l'URL
+    const url = new URL(request.url);
+    const segments = url.pathname.split('/');
+    const id = segments[segments.indexOf("collections") + 1];
+    
     // Mettre à jour les APIs associées pour les dissocier de la collection
     await prisma.api.updateMany({
-      where: { collectionId: params.id },
+      where: { collectionId: id },
       data: { collectionId: null },
     })
 
     // Supprimer la collection
     await prisma.collection.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ success: true })

@@ -1,16 +1,11 @@
 import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { EnvironmentForm } from "../components/environment-form"
+import { PageParams } from "@/types/next"
 
-type PageParams = {
-  params: {
-    id: string
-  }
-}
-
-export default async function EnvironmentPage({ params }: PageParams) {
+export default async function EnvironmentPage({ params }: PageParams<{ id: string }>) {
   // Attendre les paramètres avant de les utiliser
-  const id = await params.id
+  const { id } = await params
 
   const environment = id === 'new'
     ? null
