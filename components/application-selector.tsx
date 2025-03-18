@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useCallback } from "react"
 
 type Application = {
   id: string
@@ -28,25 +28,7 @@ export function ApplicationSelector({ applications, selectedApplicationId: initi
   const { toast } = useToast()
   const hasShownToast = useRef(false)
 
-  // Effet pour charger l'application depuis le localStorage au démarrage
-  useEffect(() => {
-    // Ne s'exécute qu'une seule fois au montage du composant
-    if (!initialSelectedApplicationId && applications.length > 0) {
-      const savedApplicationId = localStorage.getItem(LOCAL_STORAGE_KEY)
-      if (savedApplicationId && applications.some(app => app.id === savedApplicationId)) {
-        handleApplicationChange(savedApplicationId)
-      } else if (!hasShownToast.current) {
-        hasShownToast.current = true
-        toast({
-          variant: "destructive",
-          title: "Sélection requise",
-          description: "Veuillez sélectionner une application pour continuer.",
-        })
-      }
-    }
-  }, [initialSelectedApplicationId, applications, toast]) // Ajout des dépendances manquantes
-
-  const handleApplicationChange = async (applicationId: string) => {
+  const handleApplicationChange = useCallback(async (applicationId: string) => {
     try {
       const response = await fetch('/api/active-application', {
         method: 'PUT',
@@ -78,7 +60,25 @@ export function ApplicationSelector({ applications, selectedApplicationId: initi
         description: error instanceof Error ? error.message : "Une erreur est survenue",
       })
     }
-  }
+  }, [applications, router, toast])
+
+  // Effet pour charger l'application depuis le localStorage au démarrage
+  useEffect(() => {
+    // Ne s'exécute qu'une seule fois au montage du composant
+    if (!initialSelectedApplicationId && applications.length > 0) {
+      const savedApplicationId = localStorage.getItem(LOCAL_STORAGE_KEY)
+      if (savedApplicationId && applications.some(app => app.id === savedApplicationId)) {
+        handleApplicationChange(savedApplicationId)
+      } else if (!hasShownToast.current) {
+        hasShownToast.current = true
+        toast({
+          variant: "destructive",
+          title: "Sélection requise",
+          description: "Veuillez sélectionner une application pour continuer.",
+        })
+      }
+    }
+  }, [initialSelectedApplicationId, applications, toast, handleApplicationChange])
 
   return (
     <Select

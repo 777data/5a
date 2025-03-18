@@ -69,7 +69,7 @@ export async function POST(request: Request) {
 }
 
 // Gérer les requêtes OPTIONS pour le preflight CORS
-export async function OPTIONS(request: Request) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     headers: {
       'Access-Control-Allow-Origin': '*',

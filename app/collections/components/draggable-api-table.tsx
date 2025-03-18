@@ -42,7 +42,7 @@ type Api = {
   url: string
   method: string
   headers: Record<string, string>
-  body: any
+  body: unknown
   order: number
   createdAt: Date
 }
@@ -317,7 +317,7 @@ export function DraggableApiTable({
             className="gap-2"
           >
             <Save className="h-4 w-4" />
-            Sauvegarder l'ordre
+            Sauvegarder l&apos;ordre
           </Button>
         )}
       </div>
@@ -428,7 +428,7 @@ export function DraggableApiTable({
           <AlertDialogHeader>
             <AlertDialogTitle>Êtes-vous sûr de vouloir supprimer cette API ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. L'API "{apiToDelete?.name}" sera définitivement supprimée.
+              Cette action est irréversible. L&apos;API &quot;{apiToDelete?.name}&quot; sera définitivement supprimée.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

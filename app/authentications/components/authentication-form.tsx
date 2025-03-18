@@ -138,7 +138,7 @@ export function AuthenticationForm({ applicationId, authentication }: Authentica
 
         <div className="flex gap-4">
           <Button type="submit" disabled={isLoading}>
-            {authentication ? 'Modifier' : 'Créer'}
+            {authentication ? "Modifier" : "Créer"}
           </Button>
           <Button
             type="button"

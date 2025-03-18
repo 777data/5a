@@ -24,18 +24,25 @@ export default async function EditApiPage({
   if (!api || api.applicationId !== activeApplicationId) {
     notFound()
   }
+  
+  // Conversion des headers et body pour correspondre au type attendu par ApiForm
+  const formattedApi = {
+    ...api,
+    headers: api.headers ? (api.headers as Record<string, string>) : {},
+    body: api.body
+  }
 
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Modifier l'API</h1>
+        <h1 className="text-2xl font-bold">Modifier l&apos;API</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Modifiez les informations de l'API
+          Modifiez les informations de l&apos;API
         </p>
       </div>
 
       <div className="max-w-2xl">
-        <ApiForm api={api} applicationId={activeApplicationId} />
+        <ApiForm api={formattedApi} applicationId={activeApplicationId} />
       </div>
     </div>
   )

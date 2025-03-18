@@ -41,11 +41,9 @@ type CollectionListProps = {
 export function CollectionList({ collections }: CollectionListProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const [isLoading, setIsLoading] = useState(false)
   const [collectionToDelete, setCollectionToDelete] = useState<Collection | null>(null)
 
   async function deleteCollection(collection: Collection) {
-    setIsLoading(true)
     try {
       const response = await fetch(`/api/collections/${collection.id}`, {
         method: 'DELETE',
@@ -70,7 +68,6 @@ export function CollectionList({ collections }: CollectionListProps) {
         description: error instanceof Error ? error.message : "Une erreur est survenue lors de la suppression",
       })
     } finally {
-      setIsLoading(false)
       setCollectionToDelete(null)
     }
   }
@@ -132,7 +129,7 @@ export function CollectionList({ collections }: CollectionListProps) {
         
         {collections.length === 0 && (
           <div className="col-span-full text-center py-12 bg-gray-50 rounded-lg border">
-            <p className="text-gray-500">Aucune collection n'a été créée</p>
+            <p className="text-gray-500">Aucune collection n&apos;a été créée</p>
             <Button 
               variant="outline" 
               className="mt-4"

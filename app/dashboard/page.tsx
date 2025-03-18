@@ -129,7 +129,7 @@ export default async function DashboardPage() {
         {/* Temps moyen */}
         <Card>
           <CardHeader>
-            <CardTitle>Temps moyen d'exécution</CardTitle>
+            <CardTitle>Temps moyen d&apos;exécution</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
@@ -152,7 +152,7 @@ export default async function DashboardPage() {
       {/* Graphique des temps d'exécution */}
       <Card>
         <CardHeader>
-          <CardTitle>Temps d'exécution par API</CardTitle>
+          <CardTitle>Temps d&apos;exécution par API</CardTitle>
         </CardHeader>
         <CardContent>
           <ExecutionTimeChart data={chartData} />

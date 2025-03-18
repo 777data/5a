@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   Table,
@@ -236,7 +236,7 @@ export function CollectionTable({
               </TableHead>
               <TableHead>Nom</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead>Nombre d'APIs</TableHead>
+              <TableHead>Nombre d&apos;APIs</TableHead>
               <TableHead className="w-[150px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -338,7 +338,7 @@ export function CollectionTable({
           <AlertDialogHeader>
             <AlertDialogTitle>Êtes-vous sûr de vouloir supprimer cette collection ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. La collection "{collectionToDelete?.name}" sera définitivement supprimée.
+              Cette action est irréversible. La collection &quot;{collectionToDelete?.name}&quot; sera définitivement supprimée.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

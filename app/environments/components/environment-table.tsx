@@ -177,7 +177,7 @@ export function EnvironmentTable({ environments }: EnvironmentTableProps) {
             {environments.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="text-center py-6 text-gray-500">
-                  Aucun environnement n'a été créé
+                  Aucun environnement n&apos;a été créé
                 </TableCell>
               </TableRow>
             )}
@@ -199,8 +199,10 @@ export function EnvironmentTable({ environments }: EnvironmentTableProps) {
             <AlertDialogAction
               className="bg-red-500 hover:bg-red-600"
               onClick={(e) => {
-                e.stopPropagation()
-                environmentToDelete && deleteEnvironment(environmentToDelete)
+                e.stopPropagation();
+                if (environmentToDelete) {
+                  deleteEnvironment(environmentToDelete);
+                }
               }}
             >
               Supprimer

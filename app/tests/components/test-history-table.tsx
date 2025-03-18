@@ -8,17 +8,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
 import { Badge } from "@/components/ui/badge"
 import { formatDistanceToNow } from "date-fns"
 import { fr } from "date-fns/locale"
 import { Button } from "@/components/ui/button"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { useState, useEffect, Fragment } from "react"
 
 type ApiTest = {
@@ -52,7 +46,6 @@ type TestHistoryTableProps = {
 }
 
 export function TestHistoryTable({ tests }: TestHistoryTableProps) {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const [expandedTest, setExpandedTest] = useState<string | null>(null)
 
@@ -88,7 +81,7 @@ export function TestHistoryTable({ tests }: TestHistoryTableProps) {
 
   // Vérifier si un testId est spécifié dans l'URL et déployer ce test
   useEffect(() => {
-    const testId = searchParams.get('testId')
+    const testId = searchParams?.get('testId')
     if (testId) {
       setExpandedTest(testId)
       
@@ -233,7 +226,7 @@ export function TestHistoryTable({ tests }: TestHistoryTableProps) {
           {tests.length === 0 && (
             <TableRow>
               <TableCell colSpan={6} className="text-center py-6 text-gray-500">
-                Aucun test n'a été effectué
+                Aucun test n&apos;a été effectué
               </TableCell>
             </TableRow>
           )}

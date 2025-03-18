@@ -33,7 +33,7 @@ const headerSchema = z.object({
 
 const formSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
-  url: z.string().min(1, "L'URL est requise").url("L'URL n'est pas valide"),
+  url: z.string().min(1, "L&apos;URL est requise").url("L&apos;URL n&apos;est pas valide"),
   method: z.enum(["GET", "POST", "PUT", "DELETE", "PATCH"]),
   headers: z.array(headerSchema).optional(),
   body: z.string().optional(),
@@ -48,8 +48,8 @@ type Api = {
   name: string
   url: string
   method: string
-  headers: any
-  body: any
+  headers: Record<string, string>
+  body: unknown
   collectionId?: string | null
   createdAt: Date
 }
@@ -135,11 +135,11 @@ export function ApiForm({ api, applicationId, initialCollectionId }: ApiFormProp
       if (data.body) {
         try {
           bodyObject = JSON.parse(data.body)
-        } catch (e) {
+        } catch {
           toast({
             variant: "destructive",
             title: "Erreur",
-            description: "Le body n'est pas un JSON valide",
+            description: "Le body n&apos;est pas un JSON valide",
           })
           return
         }

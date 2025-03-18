@@ -10,7 +10,7 @@ export function Footer() {
           © {currentYear} Leonaar. Tous droits réservés.
         </p>
         <div className="flex space-x-4 text-sm text-gray-500">
-          <Link href="/terms" className="hover:text-gray-900 transition-colors">Conditions d'utilisation</Link>
+          <Link href="/terms" className="hover:text-gray-900 transition-colors">Conditions d&apos;utilisation</Link>
           <Link href="/privacy" className="hover:text-gray-900 transition-colors">Politique de confidentialité</Link>
           <Link href="/contact" className="hover:text-gray-900 transition-colors">Contact</Link>
         </div>

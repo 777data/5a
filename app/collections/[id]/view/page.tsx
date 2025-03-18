@@ -6,18 +6,6 @@ import Link from "next/link"
 import { Plus, Edit } from "lucide-react"
 import { PageParams } from "@/types/next"
 
-// Type pour les APIs avec les conversions nécessaires
-type ApiWithJsonValues = {
-  id: string
-  name: string
-  url: string
-  method: string
-  headers: any
-  body: any
-  order: number
-  createdAt: Date
-}
-
 export default async function CollectionDetailPage({ params }: PageParams<{ id: string }>) {
   // Attendre les paramètres avant d'utiliser leurs propriétés
   const awaitedParams = await params
@@ -64,7 +52,7 @@ export default async function CollectionDetailPage({ params }: PageParams<{ id: 
     url: api.url,
     method: api.method,
     headers: api.headers as Record<string, string>,
-    body: api.body,
+    body: api.body as Record<string, unknown>,
     order: api.order,
     createdAt: api.createdAt
   }))

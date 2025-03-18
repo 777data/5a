@@ -101,14 +101,14 @@ export function ApiOrderManager({ apis, collectionId }: ApiOrderManagerProps) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Ordre d'exécution des APIs</h2>
+        <h2 className="text-xl font-semibold">Ordre d&apos;exécution des APIs</h2>
         <Button 
           onClick={saveOrder} 
           disabled={!hasChanges || isLoading}
           variant={hasChanges ? "default" : "outline"}
         >
           <Save className="h-4 w-4 mr-2" />
-          Sauvegarder l'ordre
+          Sauvegarder l&apos;ordre
         </Button>
       </div>
       

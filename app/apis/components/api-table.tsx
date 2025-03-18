@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   Table,
@@ -34,8 +34,8 @@ type Api = {
   url: string
   method: string
   headers: Record<string, string>
-  body: any
-  order: number
+  body: unknown
+  order?: number
   createdAt: Date
 }
 
@@ -176,6 +176,11 @@ export function ApiTable({
       console.log(`[API_TABLE] Test de l'API ${apiToTest.name}`)
       // Utiliser le hook qui appelle maintenant la Server Action
       await testSingleApi(apiToTestData, environmentId, authenticationId)
+      
+      // Notifier le parent si la fonction de callback est disponible
+      if (onTestSelected) {
+        onTestSelected([apiToTest.id]);
+      }
     } else if (selectedApis.size > 0) {
       // Tester plusieurs APIs sélectionnées
       const selectedApisList = apis
@@ -197,6 +202,11 @@ export function ApiTable({
         environmentId,
         authenticationId
       })
+      
+      // Notifier le parent si la fonction de callback est disponible
+      if (onTestSelected) {
+        onTestSelected(Array.from(selectedApis));
+      }
     }
     
     // Fermer la boîte de dialogue après le test
@@ -302,7 +312,7 @@ export function ApiTable({
           <AlertDialogHeader>
             <AlertDialogTitle>Êtes-vous sûr de vouloir supprimer cette API ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. L'API "{apiToDelete?.name}" sera définitivement supprimée.
+              Cette action est irréversible. L&apos;API &quot;{apiToDelete?.name}&quot; sera définitivement supprimée.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -316,7 +326,7 @@ export function ApiTable({
       <ApiTestDialog
         open={isTestDialogOpen}
         onOpenChange={setIsTestDialogOpen}
-        title={apiToTest ? `Tester l'API "${apiToTest.name}"` : `Tester ${selectedApis.size} API(s)`}
+        title={apiToTest ? `Tester l&apos;API &quot;${apiToTest.name}&quot;` : `Tester ${selectedApis.size} API(s)`}
         environments={environments}
         authentications={authentications}
         onTest={handleTest}

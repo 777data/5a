@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import {
   Dialog,
   DialogContent,
@@ -18,7 +17,6 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
-import { ApiToTest } from "@/app/services/api-test.service"
 
 const STORAGE_KEY = 'api-test-preferences'
 

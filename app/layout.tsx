@@ -7,7 +7,6 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { ApplicationSelector } from "@/components/application-selector";
 import Image from "next/image";
-import { Select, SelectItem } from "@/components/ui/select";
 import { MainNav } from "@/components/main-nav";
 import { Footer } from '@/app/components/footer';
 

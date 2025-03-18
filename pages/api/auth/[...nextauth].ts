@@ -2,7 +2,6 @@ import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from '@/lib/prisma';
-import { Session } from 'next-auth';
 
 declare module 'next-auth' {
   interface Session {
@@ -28,7 +27,7 @@ export default NextAuth({
     strategy: 'jwt',
   },
   callbacks: {
-    async session({ session, token, user }) {
+    async session({ session, user }) {
       if (session.user) {
         session.user = {
           ...session.user,

@@ -139,7 +139,7 @@ export function VariableTable({ variables, environmentId }: VariableTableProps) 
             {variables.length === 0 && (
               <TableRow>
                 <TableCell colSpan={3} className="text-center py-6 text-gray-500">
-                  Aucune variable n'a été créée
+                  Aucune variable n&apos;a été créée
                 </TableCell>
               </TableRow>
             )}

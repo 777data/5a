@@ -1,6 +1,5 @@
 import { cookies } from "next/headers"
-import { notFound, redirect } from "next/navigation"
-import { prisma } from "@/lib/prisma"
+import { redirect } from "next/navigation"
 import { ApiForm } from "../components/api-form"
 
 export default async function NewApiPage({

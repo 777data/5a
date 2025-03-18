@@ -9,7 +9,7 @@ export type ApiToTest = {
   url: string
   method: string
   headers: Record<string, string> | null
-  body: any
+  body: unknown
   order?: number
 }
 
@@ -30,7 +30,12 @@ export type Authentication = {
 }
 
 /**
- * Type pour les résultats de test
+ * Type pour une réponse d'API
+ */
+export type ApiResponseData = Record<string, unknown> | null
+
+/**
+ * Type pour les résultats de test d'une API
  */
 export type ApiTestResult = {
   apiId: string
@@ -38,7 +43,7 @@ export type ApiTestResult = {
   duration: number
   response: {
     headers: Record<string, string>
-    data: any
+    data: unknown
   }
   error: string | null
 }
@@ -51,7 +56,7 @@ export type TestParams = {
   environmentId: string
   authenticationId?: string | null
   apis: ApiToTest[]
-  previousResponse?: any
+  previousResponse?: ApiResponseData
 }
 
 /**
@@ -85,40 +90,53 @@ function replaceVariables(template: string, variables: EnvironmentVariable[]): s
 }
 
 /**
- * Remplace les variables de type response.body.xxx dans une chaîne de caractères
- * @param template La chaîne de caractères contenant les variables à remplacer
+ * Remplace les variables de réponse dans une chaîne
+ * @param template La chaîne contenant les variables
  * @param previousResponse La réponse précédente
  * @returns La chaîne de caractères avec les variables remplacées
  */
-function replaceResponseVariables(template: string, previousResponse: any): string {
+function replaceResponseVariables(template: string, previousResponse: ApiResponseData): string {
   if (!template || !previousResponse) return template;
   
   let result = template;
   
   // Trouver toutes les occurrences de {{response.body.xxx}}
-  const responsePattern = /{{response\.body\.([\w\.]+)}}/g;
-  let match;
+  const matches = [...result.matchAll(/\{\{response\.body\.([^}]+)\}\}/g)];
   
-  while ((match = responsePattern.exec(template)) !== null) {
-    const fullMatch = match[0];
+  for (const match of matches) {
+    const placeholder = match[0];
     const path = match[1].split('.');
     
     // Extraire la valeur du chemin dans la réponse
-    let value = previousResponse;
+    let value: unknown = previousResponse;
     try {
       for (const key of path) {
-        value = value[key];
+        if (value && typeof value === 'object') {
+          value = (value as Record<string, unknown>)[key];
+        } else {
+          value = undefined;
+          break;
+        }
         if (value === undefined) break;
       }
       
       // Remplacer la variable par la valeur si elle existe
       if (value !== undefined) {
-        // Convertir en chaîne si nécessaire
-        const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
-        result = result.replace(fullMatch, stringValue);
+        let replacementValue = '';
+        if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+          replacementValue = String(value);
+        } else if (value !== null && typeof value === 'object') {
+          try {
+            replacementValue = JSON.stringify(value);
+          } catch (error) {
+            console.warn(`[API_TEST_SERVICE] Impossible de convertir l'objet en JSON:`, error);
+            replacementValue = String(value);
+          }
+        }
+        result = result.replace(placeholder, replacementValue);
       }
     } catch (error) {
-      console.warn(`[API_TEST_SERVICE] Impossible d'accéder au chemin ${path.join('.')} dans la réponse précédente`, error);
+      console.warn(`[API_TEST_SERVICE] Erreur lors de l'extraction de la valeur:`, error);
     }
   }
   
@@ -172,8 +190,8 @@ export async function getAuthentication(authenticationId?: string | null): Promi
 }
 
 /**
- * Prépare les données pour l'appel API
- * @param api L'API à tester
+ * Prépare les données pour un appel API en remplaçant les variables
+ * @param api L'API à appeler
  * @param variables Les variables d'environnement
  * @param authentication L'authentification
  * @param previousResponse La réponse précédente
@@ -183,7 +201,7 @@ export function prepareApiCallData(
   api: ApiToTest,
   variables: EnvironmentVariable[],
   authentication: Authentication | null,
-  previousResponse?: any
+  previousResponse?: ApiResponseData
 ) {
   // Remplacer les variables dans l'URL
   let url = api.url;
@@ -269,8 +287,8 @@ export async function testSingleApi(
   api: ApiToTest,
   variables: EnvironmentVariable[],
   authentication: Authentication | null,
-  previousResponse?: any
-): Promise<{ result: ApiTestResult, responseData: any }> {
+  previousResponse?: ApiResponseData
+): Promise<{ result: ApiTestResult, responseData: ApiResponseData }> {
   const startTime = Date.now();
   
   try {

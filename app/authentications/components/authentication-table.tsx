@@ -41,11 +41,9 @@ type AuthenticationTableProps = {
 export function AuthenticationTable({ authentications, applicationId }: AuthenticationTableProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const [isLoading, setIsLoading] = useState(false)
   const [authToDelete, setAuthToDelete] = useState<Authentication | null>(null)
 
   async function deleteAuthentication(authentication: Authentication) {
-    setIsLoading(true)
     try {
       const response = await fetch(`/api/applications/${applicationId}/authentications/${authentication.id}`, {
         method: 'DELETE',
@@ -58,19 +56,18 @@ export function AuthenticationTable({ authentications, applicationId }: Authenti
 
       toast({
         title: "Authentification supprimée",
-        description: "L'authentification a été supprimée avec succès.",
+        description: `L'authentification "${authentication.name}" a été supprimée avec succès.`,
       })
 
       router.refresh()
     } catch (error) {
-      console.error('Erreur:', error)
+      console.error('Erreur lors de la suppression:', error)
       toast({
         variant: "destructive",
         title: "Erreur",
         description: error instanceof Error ? error.message : "Une erreur est survenue lors de la suppression",
       })
     } finally {
-      setIsLoading(false)
       setAuthToDelete(null)
     }
   }
@@ -78,7 +75,7 @@ export function AuthenticationTable({ authentications, applicationId }: Authenti
   if (authentications.length === 0) {
     return (
       <div className="text-center text-sm text-gray-500 mt-4">
-        Aucune authentification n'a été créée.
+        Aucune authentification n&apos;a été créée.
       </div>
     )
   }
@@ -138,7 +135,7 @@ export function AuthenticationTable({ authentications, applicationId }: Authenti
             {authentications.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-6 text-gray-500">
-                  Aucune authentification n'a été créée
+                  Aucune authentification n&apos;a été créée
                 </TableCell>
               </TableRow>
             )}
@@ -151,7 +148,7 @@ export function AuthenticationTable({ authentications, applicationId }: Authenti
           <AlertDialogHeader>
             <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. Cela supprimera définitivement l'authentification
+              Cette action est irréversible. Cela supprimera définitivement l&apos;authentification
               {authToDelete?.name && ` "${authToDelete.name}"`}.
             </AlertDialogDescription>
           </AlertDialogHeader>

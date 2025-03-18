@@ -9,7 +9,7 @@ export default function SignInPage() {
       <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow">
         <div className="text-center">
           <h1 className="text-2xl font-bold">Connexion</h1>
-          <p className="mt-2 text-gray-600">Connectez-vous pour accéder à l'application</p>
+          <p className="mt-2 text-gray-600">Connectez-vous pour accéder à l&apos;application</p>
         </div>
         <div className="mt-8 space-y-6">
           <Button 

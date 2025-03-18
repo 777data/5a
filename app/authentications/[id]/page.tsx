@@ -61,7 +61,7 @@ export default async function AuthenticationPage({ params }: PageParams) {
     }
   }
 
-  const title = id === 'new' ? 'Ajouter une authentification' : 'Modifier l\'authentification'
+  const title = id === 'new' ? 'Ajouter une authentification' : 'Modifier l&apos;authentification'
 
   return (
     <div className="p-6">

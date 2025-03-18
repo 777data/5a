@@ -6,9 +6,11 @@ import {
   testApis as testApisAction, 
   testSingleApi as testSingleApiAction, 
   testCollection as testCollectionAction,
-  resetLastResponse as resetLastResponseAction,
-  redirectToTestResults
+  resetLastResponse as resetLastResponseAction
 } from '@/app/actions/api-test.action'
+
+// Type pour les données de réponse d'API
+type ApiResponseData = Record<string, unknown>
 
 type ApiTestHookParams = {
   applicationId: string
@@ -18,7 +20,7 @@ type TestApiParams = {
   apis: ApiToTest[]
   environmentId: string
   authenticationId: string | null
-  previousResponse?: any
+  previousResponse?: ApiResponseData
   collectionId?: string
 }
 
@@ -133,7 +135,7 @@ export function useApiTest({ applicationId }: ApiTestHookParams) {
   /**
    * Teste une seule API
    */
-  const testSingleApi = async (api: ApiToTest, environmentId: string, authenticationId: string | null, previousResponse?: any) => {
+  const testSingleApi = async (api: ApiToTest, environmentId: string, authenticationId: string | null, previousResponse: ApiResponseData | null = null) => {
     console.log(`[USE_API_TEST] Test de l'API ${api.name} (${api.id}):`, {
       environmentId,
       authenticationId,
@@ -186,7 +188,7 @@ export function useApiTest({ applicationId }: ApiTestHookParams) {
   /**
    * Teste une collection d'APIs
    */
-  const testCollection = async (collectionId: string, environmentId: string, authenticationId: string | null, previousResponse?: any) => {
+  const testCollection = async (collectionId: string, environmentId: string, authenticationId: string | null, previousResponse?: ApiResponseData) => {
     console.log(`[USE_API_TEST] Test de la collection ${collectionId}:`, {
       environmentId,
       authenticationId,

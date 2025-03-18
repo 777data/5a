@@ -9,16 +9,19 @@ import {
 } from '@/app/services/api-test.service'
 import { prisma } from '@/lib/prisma'
 
+// Définir un type pour les données de réponse
+type ApiResponseData = Record<string, unknown>;
+
 // Map pour stocker temporairement les réponses précédentes par application
 // Clé: ID d'application, Valeur: dernière réponse
-const applicationResponses = new Map<string, any>()
+const applicationResponses = new Map<string, ApiResponseData>()
 
 /**
  * Stocke la dernière réponse pour l'application
  * @param applicationId ID de l'application
  * @param response Réponse à stocker
  */
-function storeLastResponse(applicationId: string, response: any): void {
+function storeLastResponse(applicationId: string, response: ApiResponseData): void {
   applicationResponses.set(applicationId, response)
   console.log(`[API_TEST_ACTION] Réponse stockée pour l'application ${applicationId.substring(0, 8)}...`)
 }
@@ -28,7 +31,7 @@ function storeLastResponse(applicationId: string, response: any): void {
  * @param applicationId ID de l'application
  * @returns Dernière réponse ou null
  */
-function getLastResponse(applicationId: string): any {
+function getLastResponse(applicationId: string): ApiResponseData | null {
   const response = applicationResponses.get(applicationId)
   console.log(`[API_TEST_ACTION] Récupération de la réponse pour l'application ${applicationId.substring(0, 8)}...`, {
     exists: !!response,
@@ -44,7 +47,7 @@ type TestApiParams = {
   apis: ApiToTest[]
   environmentId: string
   authenticationId: string | null
-  previousResponse?: any
+  previousResponse?: ApiResponseData
   applicationId: string
 }
 
@@ -55,7 +58,7 @@ type TestCollectionParams = {
   collectionId: string
   environmentId: string
   authenticationId: string | null
-  previousResponse?: any
+  previousResponse?: ApiResponseData
 }
 
 /**
@@ -161,7 +164,7 @@ export async function testSingleApi(
   api: ApiToTest, 
   environmentId: string, 
   authenticationId: string | null, 
-  previousResponse: any | null,
+  previousResponse: ApiResponseData | null,
   applicationId: string
 ): Promise<TestActionResponse> {
   console.log(`[API_TEST_ACTION] Test de l'API ${api.name} (${api.id})`, {
@@ -174,7 +177,7 @@ export async function testSingleApi(
     apis: [api],
     environmentId,
     authenticationId,
-    previousResponse,
+    previousResponse: previousResponse || undefined,
     applicationId
   })
 }

@@ -11,8 +11,8 @@ export default function ContactPage() {
         <div>
           <h2 className="text-xl font-semibold mb-4">Nous contacter</h2>
           <p className="text-gray-600 mb-6">
-            Vous avez des questions, des suggestions ou besoin d'assistance ? 
-            N'hésitez pas à nous contacter en utilisant le formulaire ci-contre ou 
+            Vous avez des questions, des suggestions ou besoin d&apos;assistance ? 
+            N&apos;hésitez pas à nous contacter en utilisant le formulaire ci-contre ou 
             directement via notre adresse email ci-dessous.
           </p>
           
@@ -34,7 +34,7 @@ export default function ContactPage() {
           <div className="mt-8">
             <h3 className="font-medium mb-2">À propos de 5A</h3>
             <p className="text-gray-600">
-              5A (Advanced Automated API Auditing & Assessment) est une solution 
+              5A (Advanced Automated API Auditing &amp; Assessment) est une solution 
               complète pour tester, auditer et évaluer vos APIs. Notre plateforme 
               vous aide à garantir la qualité, la sécurité et la performance de 
               vos interfaces de programmation.

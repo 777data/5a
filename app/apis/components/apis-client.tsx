@@ -12,7 +12,8 @@ type Api = {
   url: string
   method: string
   headers: Record<string, string>
-  body: any
+  body: unknown
+  order?: number
   createdAt: Date
 }
 
