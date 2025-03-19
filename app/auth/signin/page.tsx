@@ -6,8 +6,6 @@ import { useSearchParams } from 'next/navigation'
 
 const getErrorMessage = (error: string | null) => {
   switch (error) {
-    case 'AccessDenied':
-      return "Seules les adresses email @agendize.com sont autorisées."
     case 'OAuthSignin':
       return "Une erreur est survenue lors de l'initialisation de la connexion."
     case 'OAuthCallback':
@@ -18,6 +16,8 @@ const getErrorMessage = (error: string | null) => {
       return "Une erreur est survenue lors de la création de votre compte."
     case 'Callback':
       return "Une erreur est survenue lors de la validation de vos informations."
+    case 'AccessDenied':
+      return "L'accès a été refusé."
     default:
       return "Une erreur est survenue lors de la connexion. Veuillez réessayer."
   }
