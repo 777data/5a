@@ -2,7 +2,7 @@ import NextAuth, { NextAuthOptions, Session, User } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from '@/lib/prisma';
-import { Account, Profile } from 'next-auth';
+import { Account } from 'next-auth';
 
 declare module 'next-auth' {
   interface Session {
