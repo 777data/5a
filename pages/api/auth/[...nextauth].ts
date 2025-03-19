@@ -69,6 +69,12 @@ export const authOptions: NextAuthOptions = {
     },
     async signIn({ user, account, profile }: { user: User; account: Account | null; profile?: Profile }) {
       try {
+        // Vérifier que l'email se termine par @agendize.com
+        if (!user.email?.endsWith('@agendize.com')) {
+          console.log('Unauthorized email domain:', user.email);
+          return false;
+        }
+
         return true;
       } catch (error) {
         console.error('SignIn callback error:', error);
