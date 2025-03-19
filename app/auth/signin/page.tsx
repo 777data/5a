@@ -4,18 +4,43 @@ import { signIn } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { useSearchParams } from 'next/navigation'
 
+const getErrorMessage = (error: string | null) => {
+  switch (error) {
+    case 'OAuthSignin':
+      return "Une erreur est survenue lors de l'initialisation de la connexion."
+    case 'OAuthCallback':
+      return "Une erreur est survenue lors de la validation de vos informations."
+    case 'OAuthCreateAccount':
+      return "Une erreur est survenue lors de la création de votre compte."
+    case 'EmailCreateAccount':
+      return "Une erreur est survenue lors de la création de votre compte."
+    case 'Callback':
+      return "Une erreur est survenue lors de la validation de vos informations."
+    case 'AccessDenied':
+      return "L'accès a été refusé."
+    default:
+      return "Une erreur est survenue lors de la connexion. Veuillez réessayer."
+  }
+}
+
 export default function SignInPage() {
   const searchParams = useSearchParams()
   const error = searchParams?.get('error')
 
   const handleGoogleSignIn = async () => {
     try {
-      await signIn('google', {
+      const result = await signIn('google', {
         callbackUrl: '/',
         redirect: true,
       })
+      
+      console.log('SignIn result:', result)
+      
+      if (result?.error) {
+        console.error('SignIn error:', result.error)
+      }
     } catch (error) {
-      console.error('Erreur de connexion:', error)
+      console.error('SignIn catch error:', error)
     }
   }
 
@@ -27,7 +52,7 @@ export default function SignInPage() {
           <p className="mt-2 text-gray-600">Connectez-vous pour accéder à l&apos;application</p>
           {error && (
             <p className="mt-2 text-sm text-red-600">
-              Une erreur est survenue lors de la connexion. Veuillez réessayer.
+              {getErrorMessage(error)}
             </p>
           )}
         </div>

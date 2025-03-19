@@ -72,15 +72,24 @@ export const authOptions: NextAuthOptions = {
       console.log('Returning baseUrl:', baseUrl);
       return baseUrl;
     },
-    async signIn({ user, account }: { user: User; account: Account | null; }) {
-      // Log pour le débogage
-      console.log('SignIn callback:', { 
-        user: { id: user.id, email: user.email },
-        provider: account?.provider,
-        type: account?.type
-      });
-      
-      return true;
+    async signIn({ user, account, profile }: { user: User; account: Account | null; profile?: any }) {
+      try {
+        // Log pour le débogage
+        console.log('SignIn callback details:', { 
+          user: { id: user.id, email: user.email },
+          account: {
+            provider: account?.provider,
+            type: account?.type,
+            scope: account?.scope,
+          },
+          profile: profile
+        });
+        
+        return true;
+      } catch (error) {
+        console.error('SignIn callback error:', error);
+        return false;
+      }
     },
   },
   pages: {
