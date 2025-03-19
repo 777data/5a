@@ -1,8 +1,19 @@
-import NextAuth, { NextAuthOptions, Session, User } from 'next-auth';
+import NextAuth, { NextAuthOptions, Session, User, Profile } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from '@/lib/prisma';
 import { Account } from 'next-auth';
+
+interface GoogleProfile {
+  email: string;
+  email_verified: boolean;
+  name: string;
+  picture: string;
+  given_name: string;
+  family_name: string;
+  locale: string;
+  sub: string;
+}
 
 declare module 'next-auth' {
   interface Session {
@@ -72,7 +83,7 @@ export const authOptions: NextAuthOptions = {
       console.log('Returning baseUrl:', baseUrl);
       return baseUrl;
     },
-    async signIn({ user, account, profile }: { user: User; account: Account | null; profile?: any }) {
+    async signIn({ user, account, profile }: { user: User; account: Account | null; profile?: Profile }) {
       try {
         // Log pour le débogage
         console.log('SignIn callback details:', { 
