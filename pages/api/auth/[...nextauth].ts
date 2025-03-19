@@ -51,13 +51,9 @@ export const authOptions: NextAuthOptions = {
       if (baseUrl.startsWith('http://')) {
         baseUrl = baseUrl.replace('http://', 'https://');
       }
-
-      // Log pour le débogage
-      console.log('Redirect callback:', { url, baseUrl });
       
       // Autoriser les redirections vers l'URL de base
       if (url.startsWith(baseUrl) || url.startsWith('https://5a.leonaar.com')) {
-        console.log('Returning URL (starts with base):', url);
         return url;
       }
       
@@ -69,22 +65,10 @@ export const authOptions: NextAuthOptions = {
       }
       
       // Par défaut, rediriger vers l'URL de base
-      console.log('Returning baseUrl:', baseUrl);
       return baseUrl;
     },
     async signIn({ user, account, profile }: { user: User; account: Account | null; profile?: Profile }) {
       try {
-        // Log pour le débogage
-        console.log('SignIn callback details:', { 
-          user: { id: user.id, email: user.email },
-          account: {
-            provider: account?.provider,
-            type: account?.type,
-            scope: account?.scope,
-          },
-          profile: profile
-        });
-        
         return true;
       } catch (error) {
         console.error('SignIn callback error:', error);
