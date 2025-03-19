@@ -183,7 +183,7 @@ export function DraggableApiTable({
 
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/apis/${apiToDelete.id}`, {
+      const response = await fetch(`/api/applications/${applicationId}/apis/${apiToDelete.id}`, {
         method: 'DELETE',
       })
 

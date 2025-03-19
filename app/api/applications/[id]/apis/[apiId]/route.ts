@@ -17,8 +17,16 @@ export async function PUT(request: Request) {
     const url = new URL(request.url);
     const segments = url.pathname.split('/');
     const id = segments[segments.indexOf("applications") + 1];
-    const apiId = segments[segments.indexOf("apis") + 2];
+    const apiId = segments[segments.indexOf("apis") + 1];
     
+    // Log pour le débogage
+    console.log('URL segments:', {
+      segments,
+      applicationId: id,
+      apiId,
+      fullPath: url.pathname
+    });
+
     const json = await request.json()
     const body = apiSchema.parse(json)
 
@@ -68,7 +76,7 @@ export async function PUT(request: Request) {
     // Mettre à jour l'API
     const updatedApi = await prisma.api.update({
       where: {
-        id: apiId,
+        id: apiId
       },
       data: {
         name: body.name,
@@ -76,8 +84,8 @@ export async function PUT(request: Request) {
         method: body.method,
         headers: body.headers,
         body: body.body,
-        collectionId: body.collectionId,
-      },
+        collectionId: body.collectionId
+      }
     })
 
     return NextResponse.json(updatedApi)
@@ -102,7 +110,7 @@ export async function DELETE(request: Request) {
     const url = new URL(request.url);
     const segments = url.pathname.split('/');
     const id = segments[segments.indexOf("applications") + 1];
-    const apiId = segments[segments.indexOf("apis") + 2];
+    const apiId = segments[segments.indexOf("apis") + 1];
     
     // Vérifier si l'API existe et appartient à l'application
     const api = await prisma.application.findFirst({
