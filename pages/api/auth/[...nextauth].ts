@@ -1,8 +1,7 @@
-import NextAuth, { NextAuthOptions, Session, User, Profile } from 'next-auth';
+import NextAuth, { NextAuthOptions, Session, User } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from '@/lib/prisma';
-import { Account } from 'next-auth';
 
 declare module 'next-auth' {
   interface Session {
@@ -67,7 +66,7 @@ export const authOptions: NextAuthOptions = {
       // Par défaut, rediriger vers l'URL de base
       return baseUrl;
     },
-    async signIn({ user, account, profile }: { user: User; account: Account | null; profile?: Profile }) {
+    async signIn({ user }: { user: User }) {
       try {
         // Vérifier que l'email se termine par @agendize.com
         if (!user.email?.endsWith('@agendize.com')) {
