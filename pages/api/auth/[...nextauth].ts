@@ -4,17 +4,6 @@ import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { prisma } from '@/lib/prisma';
 import { Account } from 'next-auth';
 
-interface GoogleProfile {
-  email: string;
-  email_verified: boolean;
-  name: string;
-  picture: string;
-  given_name: string;
-  family_name: string;
-  locale: string;
-  sub: string;
-}
-
 declare module 'next-auth' {
   interface Session {
     user: {
