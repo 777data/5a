@@ -15,6 +15,7 @@ model Application {
   authentications Authentication[]
   apiTests      ApiTest[]
   collections   Collection[]
+  scheduledTests ScheduledTest[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
@@ -27,6 +28,7 @@ model Collection {
   application   Application @relation(fields: [applicationId], references: [id])
   applicationId String
   apis          Api[]
+  scheduledTests ScheduledTest[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -57,6 +59,7 @@ model Authentication {
   application   Application     @relation(fields: [applicationId], references: [id])
   applicationId String
   apiTests      ApiTest[]
+  scheduledTests ScheduledTest[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
@@ -68,6 +71,7 @@ model Environment {
   applicationId String
   variableValues VariableValue[]
   apiTests      ApiTest[]
+  scheduledTests ScheduledTest[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }
@@ -150,4 +154,20 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
+}
+
+model ScheduledTest {
+  id              String      @id @default(cuid())
+  application     Application @relation(fields: [applicationId], references: [id])
+  applicationId   String
+  collections     Collection[]
+  environmentId   String
+  environment     Environment @relation(fields: [environmentId], references: [id])
+  authenticationId String?
+  authentication  Authentication? @relation(fields: [authenticationId], references: [id])
+  cronExpression  String
+  isActive        Boolean     @default(true)
+  lastRunAt       DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 }

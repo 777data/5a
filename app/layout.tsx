@@ -7,7 +7,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { ApplicationSelector } from "@/components/application-selector";
 import Image from "next/image";
-import { MainNav } from "@/components/main-nav";
+import { MainNav } from "@/app/components/main-nav";
 import { Footer } from '@/app/components/footer';
 
 const inter = Inter({ subsets: ["latin"] });
