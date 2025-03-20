@@ -343,7 +343,9 @@ export function CollectionTable({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={() => collectionToDelete && deleteCollection(collectionToDelete)}>Supprimer</AlertDialogAction>
+            <AlertDialogAction 
+              className="bg-red-500 hover:bg-red-600"
+              onClick={() => collectionToDelete && deleteCollection(collectionToDelete)}>Supprimer</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
