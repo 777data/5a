@@ -13,6 +13,16 @@ import {
 import { Button } from "@/components/ui/button"
 import { Pencil, Trash2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 type ScheduledTest = {
   id: string
@@ -43,11 +53,12 @@ export function ScheduledTestTable({ scheduledTests }: ScheduledTestTableProps) 
   const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState<string | null>(null)
+  const [testToDelete, setTestToDelete] = useState<ScheduledTest | null>(null)
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (test: ScheduledTest) => {
     try {
-      setIsLoading(id)
-      const response = await fetch(`/api/scheduled-tests/${id}`, {
+      setIsLoading(test.id)
+      const response = await fetch(`/api/scheduled-tests/${test.id}`, {
         method: 'DELETE',
       })
 
@@ -68,6 +79,7 @@ export function ScheduledTestTable({ scheduledTests }: ScheduledTestTableProps) 
       })
     } finally {
       setIsLoading(null)
+      setTestToDelete(null)
     }
   }
 
@@ -77,58 +89,85 @@ export function ScheduledTestTable({ scheduledTests }: ScheduledTestTableProps) 
   }
 
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Collections</TableHead>
-            <TableHead>Environnement</TableHead>
-            <TableHead>Authentification</TableHead>
-            <TableHead>Périodicité</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {scheduledTests.length === 0 ? (
+    <>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={5} className="text-center py-6">
-                Aucun test programmé
-              </TableCell>
+              <TableHead>Collections</TableHead>
+              <TableHead>Environnement</TableHead>
+              <TableHead>Authentification</TableHead>
+              <TableHead>Périodicité</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
-          ) : (
-            scheduledTests.map((test) => (
-              <TableRow key={test.id}>
-                <TableCell>
-                  {test.collections.map(col => `${col.application.name} - ${col.name}`).join(", ")}
-                </TableCell>
-                <TableCell>{test.environment.name}</TableCell>
-                <TableCell>{test.authentication?.name || "Aucune"}</TableCell>
-                <TableCell>{formatCronExpression(test.cronExpression)}</TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => router.push(`/scheduled-tests/${test.id}`)}
-                    className="h-8 w-8"
-                    disabled={isLoading === test.id}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(test.id)}
-                    className="h-8 w-8 text-red-600 hover:text-red-600"
-                    disabled={isLoading === test.id}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+          </TableHeader>
+          <TableBody>
+            {scheduledTests.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-6">
+                  Aucun test programmé
                 </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+            ) : (
+              scheduledTests.map((test) => (
+                <TableRow key={test.id}>
+                  <TableCell>
+                    {test.collections.map(col => `${col.application.name} - ${col.name}`).join(", ")}
+                  </TableCell>
+                  <TableCell>{test.environment.name}</TableCell>
+                  <TableCell>{test.authentication?.name || "Aucune"}</TableCell>
+                  <TableCell>{formatCronExpression(test.cronExpression)}</TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => router.push(`/scheduled-tests/${test.id}`)}
+                      className="h-8 w-8"
+                      disabled={isLoading === test.id}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setTestToDelete(test)}
+                      className="h-8 w-8 text-red-600 hover:text-red-600"
+                      disabled={isLoading === test.id}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <AlertDialog open={testToDelete !== null} onOpenChange={() => setTestToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. Cela supprimera définitivement le test programmé
+              {testToDelete && (
+                <span className="font-medium">
+                  {" "}pour les collections : {testToDelete.collections.map(col => col.name).join(", ")}
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => testToDelete && handleDelete(testToDelete)}
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 } 
