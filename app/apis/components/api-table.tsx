@@ -317,7 +317,9 @@ export function ApiTable({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={() => apiToDelete && deleteApi(apiToDelete)}>Supprimer</AlertDialogAction>
+            <AlertDialogAction 
+              className="bg-red-500 hover:bg-red-600"
+              onClick={() => apiToDelete && deleteApi(apiToDelete)}>Supprimer</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

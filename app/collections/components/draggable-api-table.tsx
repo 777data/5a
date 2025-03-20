@@ -433,7 +433,9 @@ export function DraggableApiTable({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={deleteApi}>Supprimer</AlertDialogAction>
+            <AlertDialogAction 
+              className="bg-red-500 hover:bg-red-600"
+              onClick={deleteApi}>Supprimer</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
