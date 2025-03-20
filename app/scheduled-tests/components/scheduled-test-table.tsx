@@ -10,14 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react"
+import { Pencil, Trash2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
 type ScheduledTest = {
@@ -91,7 +85,7 @@ export function ScheduledTestTable({ scheduledTests }: ScheduledTestTableProps) 
             <TableHead>Environnement</TableHead>
             <TableHead>Authentification</TableHead>
             <TableHead>Périodicité</TableHead>
-            <TableHead className="w-[100px]">Actions</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -110,33 +104,25 @@ export function ScheduledTestTable({ scheduledTests }: ScheduledTestTableProps) 
                 <TableCell>{test.environment.name}</TableCell>
                 <TableCell>{test.authentication?.name || "Aucune"}</TableCell>
                 <TableCell>{formatCronExpression(test.cronExpression)}</TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="h-8 w-8 p-0"
-                        disabled={isLoading === test.id}
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => router.push(`/scheduled-tests/${test.id}`)}
-                      >
-                        <Pencil className="mr-2 h-4 w-4" />
-                        Modifier
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-red-600"
-                        onClick={() => handleDelete(test.id)}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Supprimer
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                <TableCell className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => router.push(`/scheduled-tests/${test.id}`)}
+                    className="h-8 w-8"
+                    disabled={isLoading === test.id}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDelete(test.id)}
+                    className="h-8 w-8 text-red-600 hover:text-red-600"
+                    disabled={isLoading === test.id}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))
