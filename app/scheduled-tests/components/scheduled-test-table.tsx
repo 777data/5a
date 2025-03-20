@@ -112,7 +112,7 @@ export function ScheduledTestTable({ scheduledTests }: ScheduledTestTableProps) 
               scheduledTests.map((test) => (
                 <TableRow key={test.id}>
                   <TableCell>
-                    {test.collections.map(col => `${col.application.name} - ${col.name}`).join(", ")}
+                    {test.collections.map(col => `${col.name}`).join(", ")}
                   </TableCell>
                   <TableCell>{test.environment.name}</TableCell>
                   <TableCell>{test.authentication?.name || "Aucune"}</TableCell>

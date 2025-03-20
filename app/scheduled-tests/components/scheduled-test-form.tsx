@@ -24,6 +24,82 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { Checkbox } from "@/components/ui/checkbox"
 
+const cronLocalization = {
+  everyText: "chaque",
+  emptyMonths: "tous les mois",
+  emptyMonthDays: "tous les jours du mois",
+  emptyMonthDaysShort: "tous les jours",
+  emptyWeekDays: "tous les jours de la semaine",
+  emptyWeekDaysShort: "tous les jours",
+  emptyHours: "toutes les heures",
+  emptyMinutes: "toutes les minutes",
+  emptyMinutesForHourPeriod: "toutes",
+  yearOption: "année",
+  monthOption: "mois",
+  weekOption: "semaine",
+  dayOption: "jour",
+  hourOption: "heure",
+  minuteOption: "minute",
+  rebootOption: "redémarrage",
+  prefixPeriod: "chaque",
+  prefixMonths: "en",
+  prefixMonthDays: "le",
+  prefixWeekDays: "le",
+  prefixWeekDaysForMonthAndYearPeriod: "le",
+  prefixHours: "à",
+  prefixMinutes: ":",
+  prefixMinutesForHourPeriod: "à",
+  suffixMinutesForHourPeriod: "minutes",
+  errorInvalidCron: "Expression Cron invalide",
+  clearButtonText: "Effacer",
+  weekDays: [
+    "dimanche",
+    "lundi",
+    "mardi",
+    "mercredi",
+    "jeudi",
+    "vendredi",
+    "samedi"
+  ],
+  months: [
+    "janvier",
+    "février",
+    "mars",
+    "avril",
+    "mai",
+    "juin",
+    "juillet",
+    "août",
+    "septembre",
+    "octobre",
+    "novembre",
+    "décembre"
+  ],
+  altWeekDays: [
+    "dimanche",
+    "lundi",
+    "mardi",
+    "mercredi",
+    "jeudi",
+    "vendredi",
+    "samedi"
+  ],
+  altMonths: [
+    "janvier",
+    "février",
+    "mars",
+    "avril",
+    "mai",
+    "juin",
+    "juillet",
+    "août",
+    "septembre",
+    "octobre",
+    "novembre",
+    "décembre"
+  ]
+}
+
 // Définition du schéma de validation
 const scheduledTestSchema = z.object({
   collectionId: z.array(z.string()).min(1, "Au moins une collection est requise"),
@@ -218,6 +294,7 @@ export function ScheduledTestForm({
                           setCronValue(value)
                           field.onChange(value)
                         }}
+                        locale={cronLocalization}
                         className="[&_.react-js-cron]:p-4 [&_.react-js-cron>div]:flex [&_.react-js-cron>div]:flex-row [&_.react-js-cron>div]:items-center [&_.react-js-cron>div]:gap-2 [&_.react-js-cron>div>span]:text-sm [&_.react-js-cron-field]:inline-flex [&_.react-js-cron-field]:items-center [&_.react-js-cron-custom-select]:h-9 [&_.react-js-cron-custom-select]:w-[120px] [&_.react-js-cron-custom-select]:px-3 [&_.react-js-cron-custom-select]:rounded-md [&_.react-js-cron-custom-select]:border [&_.react-js-cron-custom-select]:bg-background [&_.react-js-cron-custom-select]:text-sm [&_.react-js-cron-custom-select:focus]:outline-none [&_.react-js-cron-custom-select:focus]:ring-2 [&_.react-js-cron-custom-select:focus]:ring-ring [&_.react-js-cron-custom-select:focus]:ring-offset-2 [&_.react-js-cron-period]:mb-0 [&_.react-js-cron-clear-button]:px-3 [&_.react-js-cron-clear-button]:py-1 [&_.react-js-cron-clear-button]:rounded-md [&_.react-js-cron-clear-button]:bg-destructive [&_.react-js-cron-clear-button]:text-destructive-foreground [&_.react-js-cron-clear-button]:text-sm [&_.react-js-cron-clear-button:hover]:bg-destructive/90"
                       />
                     </div>
