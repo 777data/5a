@@ -133,6 +133,7 @@ type ScheduledTestFormProps = {
   environments: Environment[]
   authentications: Authentication[]
   initialData?: {
+    id?: string
     collectionId: string[]
     environmentId: string
     authenticationId?: string
@@ -147,26 +148,31 @@ export function ScheduledTestForm({
   initialData,
 }: ScheduledTestFormProps) {
   const { toast } = useToast()
-  const [cronValue, setCronValue] = useState(initialData?.cronExpression || '0 0 * * *') // Par défaut : tous les jours à minuit
+  const [isLoading, setIsLoading] = useState(false)
+  const [cronError, setCronError] = useState<string>()
 
   const form = useForm<ScheduledTestFormData>({
     resolver: zodResolver(scheduledTestSchema),
     defaultValues: {
-      collectionId: initialData?.collectionId || [],
-      environmentId: initialData?.environmentId || '',
-      authenticationId: initialData?.authenticationId || undefined,
-      cronExpression: initialData?.cronExpression || cronValue,
+      collectionId: initialData?.collectionId ?? [],
+      environmentId: initialData?.environmentId ?? '',
+      authenticationId: initialData?.authenticationId ?? '',
+      cronExpression: initialData?.cronExpression ?? '* * * * *',
     },
   })
 
   const onSubmit = async (data: ScheduledTestFormData) => {
+    setIsLoading(true)
     try {
-      const response = await fetch('/api/scheduled-tests', {
-        method: initialData ? 'PUT' : 'POST',
+      const response = await fetch('/api/scheduled-tests' + (initialData?.id ? `/${initialData.id}` : ''), {
+        method: initialData?.id ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          id: initialData?.id,
+        }),
       })
 
       if (!response.ok) {
@@ -183,6 +189,8 @@ export function ScheduledTestForm({
         title: "Erreur",
         description: error instanceof Error ? error.message : "Une erreur est survenue",
       })
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -289,9 +297,8 @@ export function ScheduledTestForm({
                   <FormControl>
                     <div className="rounded-md border bg-background">
                       <Cron
-                        value={cronValue}
+                        value={form.watch('cronExpression')}
                         setValue={(value: string) => {
-                          setCronValue(value)
                           field.onChange(value)
                         }}
                         locale={cronLocalization}
@@ -306,7 +313,7 @@ export function ScheduledTestForm({
           </div>
         </div>
 
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full" disabled={isLoading}>
           Programmer le test
         </Button>
       </form>

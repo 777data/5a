@@ -84,6 +84,10 @@ export async function PUT(request: Request) {
     const json = await request.json()
     const body = scheduledTestSchema.parse(json)
 
+    if (!json.id) {
+      return new NextResponse("ID du test programmé manquant", { status: 400 })
+    }
+
     // Vérifier que les collections appartiennent bien à l'application active
     const collections = await prisma.collection.findMany({
       where: {
@@ -115,19 +119,16 @@ export async function PUT(request: Request) {
       include: {
         collections: true,
         environment: true,
-        authentication: true
-      }
+        authentication: true,
+      },
     })
 
     // Mettre à jour la tâche CRON
+    cronService.stopTask(json.id)
     cronService.scheduleTest(scheduledTest)
 
     return NextResponse.json(scheduledTest)
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return new NextResponse(JSON.stringify(error.errors), { status: 400 })
-    }
-
     console.error('Error in PUT /api/scheduled-tests:', error)
     return new NextResponse(null, { status: 500 })
   }
