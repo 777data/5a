@@ -16,7 +16,7 @@ export default async function CollectionsPage() {
         <div className="rounded-lg border border-red-200 bg-red-50 p-4">
           <h2 className="text-lg font-semibold text-red-800">Aucune application sélectionnée</h2>
           <p className="mt-2 text-red-700">
-            Veuillez sélectionner une application dans le menu en haut à droite pour voir ses collections.
+            Veuillez sélectionner une application dans le menu en haut à droite pour gérer ses collections.
           </p>
         </div>
       </div>

@@ -2,6 +2,7 @@ import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
+import { cronService } from "@/lib/cron-service"
 
 const scheduledTestSchema = z.object({
   collectionId: z.array(z.string()).min(1, "Au moins une collection est requise"),
@@ -34,25 +35,31 @@ export async function POST(request: Request) {
       return new NextResponse("Collections invalides", { status: 400 })
     }
 
-    const scheduledTest = await prisma.$transaction(async (tx) => {
-      return tx.scheduledTest.create({
-        data: {
-          application: {
-            connect: { id: activeApplicationId.value },
-          },
-          collections: {
-            connect: body.collectionId.map(id => ({ id })),
-          },
-          environment: {
-            connect: { id: body.environmentId },
-          },
-          authentication: body.authenticationId
-            ? { connect: { id: body.authenticationId } }
-            : undefined,
-          cronExpression: body.cronExpression,
+    const scheduledTest = await prisma.scheduledTest.create({
+      data: {
+        application: {
+          connect: { id: activeApplicationId.value },
         },
-      })
+        collections: {
+          connect: body.collectionId.map(id => ({ id })),
+        },
+        environment: {
+          connect: { id: body.environmentId },
+        },
+        authentication: body.authenticationId
+          ? { connect: { id: body.authenticationId } }
+          : undefined,
+        cronExpression: body.cronExpression,
+      },
+      include: {
+        collections: true,
+        environment: true,
+        authentication: true
+      }
     })
+
+    // Programmer la tâche CRON
+    cronService.scheduleTest(scheduledTest)
 
     return NextResponse.json(scheduledTest)
   } catch (error) {
@@ -89,25 +96,31 @@ export async function PUT(request: Request) {
       return new NextResponse("Collections invalides", { status: 400 })
     }
 
-    const scheduledTest = await prisma.$transaction(async (tx) => {
-      return tx.scheduledTest.update({
-        where: {
-          id: json.id,
+    const scheduledTest = await prisma.scheduledTest.update({
+      where: {
+        id: json.id,
+      },
+      data: {
+        collections: {
+          set: body.collectionId.map(id => ({ id })),
         },
-        data: {
-          collections: {
-            set: body.collectionId.map(id => ({ id })),
-          },
-          environment: {
-            connect: { id: body.environmentId },
-          },
-          authentication: body.authenticationId
-            ? { connect: { id: body.authenticationId } }
-            : { disconnect: true },
-          cronExpression: body.cronExpression,
+        environment: {
+          connect: { id: body.environmentId },
         },
-      })
+        authentication: body.authenticationId
+          ? { connect: { id: body.authenticationId } }
+          : { disconnect: true },
+        cronExpression: body.cronExpression,
+      },
+      include: {
+        collections: true,
+        environment: true,
+        authentication: true
+      }
     })
+
+    // Mettre à jour la tâche CRON
+    cronService.scheduleTest(scheduledTest)
 
     return NextResponse.json(scheduledTest)
   } catch (error) {

@@ -1,6 +1,7 @@
 import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { cronService } from "@/lib/cron-service"
 
 export async function DELETE(
   request: Request,
@@ -21,15 +22,15 @@ export async function DELETE(
         application: {
           id: activeApplicationId.value
         }
-      },
-      include: {
-        collections: true
       }
     })
 
     if (!scheduledTest) {
       return new NextResponse("Test programmé non trouvé", { status: 404 })
     }
+
+    // Arrêter la tâche CRON
+    cronService.stopTask(params.id)
 
     // Supprimer le test programmé
     await prisma.scheduledTest.delete({
