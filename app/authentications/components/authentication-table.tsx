@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Pencil, Trash2 } from "lucide-react"
+import { Edit, Trash2 } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -117,7 +117,7 @@ export function AuthenticationTable({ authentications, applicationId }: Authenti
                       title="Éditer"
                       onClick={() => router.push(`/authentications/${auth.id}`)}
                     >
-                      <Pencil className="h-4 w-4" />
+                      <Edit className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
