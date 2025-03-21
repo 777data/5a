@@ -1,7 +1,7 @@
 'use client'
 
 import { signOut, useSession } from 'next-auth/react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   DropdownMenu,
   DropdownMenuLabel,
@@ -16,6 +16,7 @@ import Link from 'next/link'
 
 export function ProfileMenu() {
   const { data: session } = useSession()
+  const router = useRouter()
   const pathname = usePathname()
   const isAdminRoute = pathname?.startsWith("/admin")
 
