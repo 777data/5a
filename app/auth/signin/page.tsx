@@ -81,34 +81,32 @@ export default function SignInPage() {
   async function onSubmit(data: SignInValues) {
     try {
       setIsLoading(true)
+      form.clearErrors()
 
       const callbackUrl = searchParams?.get("callbackUrl") || "/"
-      console.log('Tentative de connexion avec:', { email: data.email, callbackUrl })
       
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
-        redirect: true,
+        redirect: false,
         callbackUrl,
       })
 
-      // Note: Ce code ne sera pas exécuté si redirect: true car la page sera rechargée
-      console.log('Résultat de la connexion:', result)
-      
       if (result?.error) {
-        console.error('Erreur de connexion:', result.error)
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: getErrorMessage(result.error),
+        form.setError('email', {
+          type: 'manual',
+          message: "Email ou mot de passe incorrect"
         })
         return
       }
 
-      toast({
-        title: "Connexion réussie",
-        description: "Vous allez être redirigé...",
-      })
+      if (result?.ok) {
+        toast({
+          title: "Connexion réussie",
+          description: "Vous allez être redirigé...",
+        })
+        router.push(callbackUrl)
+      }
     } catch (error) {
       console.error('Erreur inattendue:', error)
       toast({
@@ -163,6 +161,12 @@ export default function SignInPage() {
                 </FormItem>
               )}
             />
+
+            {form.formState.errors.root && (
+              <div className="text-sm font-medium text-destructive">
+                {form.formState.errors.root.message}
+              </div>
+            )}
 
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Connexion en cours..." : "Se connecter"}
