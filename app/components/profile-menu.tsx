@@ -1,6 +1,7 @@
 'use client'
 
 import { signOut, useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
   DropdownMenu,
@@ -13,6 +14,7 @@ import {
 import { LogOut, User } from 'lucide-react'
 
 export function ProfileMenu() {
+  const router = useRouter()
   const { data: session } = useSession()
 
   if (!session?.user) return null
@@ -37,6 +39,16 @@ export function ProfileMenu() {
           <p className="text-xs leading-none text-muted-foreground">{session.user.email}</p>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => {
+            const callbackUrl = encodeURIComponent(window.location.pathname)
+            router.push(`/profile?callbackUrl=${callbackUrl}`)
+          }}
+          className="cursor-pointer"
+        >
+          <User className="mr-2 h-4 w-4" />
+          Mon profil
+        </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => signOut({ callbackUrl: '/auth/signin' })}
           className="text-red-600 focus:text-red-600 cursor-pointer"
