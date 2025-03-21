@@ -4,12 +4,14 @@ import { signOut, useSession } from 'next-auth/react'
 import { usePathname } from 'next/navigation'
 import {
   DropdownMenu,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Button } from '@/components/ui/button'
-import { User } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { LogOut, User } from 'lucide-react'
 import Link from 'next/link'
 
 export function ProfileMenu() {
