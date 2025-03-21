@@ -1,12 +1,9 @@
 import { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
-import { Plus } from "lucide-react"
-import Link from "next/link"
-import { MembersTable } from "../../components/members-table"
 import type { OrganizationMember, User } from "@prisma/client"
-
-import { Button } from "@/components/ui/button"
+import { InviteMemberDialog } from "../../components/invite-member-dialog"
+import { MembersTable } from "../../components/members-table"
 
 interface MembersPageProps {
   params: {
@@ -61,12 +58,10 @@ export default async function MembersPage({ params }: MembersPageProps) {
             Gérez les membres de l&apos;organisation {organization.name}
           </p>
         </div>
-        <Button asChild>
-          <Link href={`/admin/organizations/${organization.id}/members/new`}>
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter
-          </Link>
-        </Button>
+        <InviteMemberDialog
+          organizationId={organization.id}
+          organizationName={organization.name}
+        />
       </div>
       <MembersTable members={members} organizationId={organization.id} />
     </div>
