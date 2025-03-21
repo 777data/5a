@@ -1,5 +1,6 @@
 import cron from 'node-cron'
 import { prisma } from './prisma'
+import { testMultipleApis } from './api-test.service'
 
 type ScheduledTest = {
   id: string
@@ -48,87 +49,43 @@ class CronService {
     // Créer une nouvelle tâche
     const task = cron.schedule(test.cronExpression, async () => {
       try {
-        // Créer un nouveau test API
-        const apiTest = await prisma.apiTest.create({
-          data: {
-            application: {
-              connect: { id: test.collections[0].applicationId }
-            },
-            environment: {
-              connect: { id: test.environmentId }
-            },
-            authentication: test.authenticationId ? {
-              connect: { id: test.authenticationId }
-            } : undefined,
-            status: 'PENDING',
-            startedAt: new Date(),
-            duration: 0
-          }
-        })
-
-        // Pour chaque API dans les collections
+        // Pour chaque collection
         for (const collection of test.collections) {
+          // Récupérer toutes les APIs de la collection
           const apis = await prisma.api.findMany({
             where: {
               collectionId: collection.id
             },
             orderBy: {
               order: 'asc'
+            },
+            select: {
+              id: true,
+              name: true,
+              url: true,
+              method: true,
+              headers: true,
+              body: true,
+              order: true
             }
           })
 
-          for (const api of apis) {
-            try {
-              const startTime = Date.now()
-              const response = await fetch(api.url, {
-                method: api.method,
-                headers: api.headers as HeadersInit,
-                body: api.method !== 'GET' ? JSON.stringify(api.body) : undefined
-              })
-
-              const duration = Date.now() - startTime
-              const responseData = await response.json()
-
-              await prisma.apiTestResult.create({
-                data: {
-                  apiTest: {
-                    connect: { id: apiTest.id }
-                  },
-                  api: {
-                    connect: { id: api.id }
-                  },
-                  statusCode: response.status,
-                  duration,
-                  response: responseData
-                }
-              })
-            } catch (error) {
-              await prisma.apiTestResult.create({
-                data: {
-                  apiTest: {
-                    connect: { id: apiTest.id }
-                  },
-                  api: {
-                    connect: { id: api.id }
-                  },
-                  statusCode: 500,
-                  duration: 0,
-                  error: error instanceof Error ? error.message : 'Une erreur est survenue',
-                  response: {}
-                }
-              })
-            }
-          }
+          // Utiliser testMultipleApis pour exécuter les tests
+          await testMultipleApis({
+            applicationId: collection.applicationId,
+            environmentId: test.environmentId,
+            authenticationId: test.authenticationId,
+            apis: apis.map(api => ({
+              id: api.id,
+              name: api.name,
+              url: api.url,
+              method: api.method,
+              headers: api.headers as Record<string, string> | null,
+              body: api.body,
+              order: api.order
+            }))
+          })
         }
-
-        // Mettre à jour le statut du test
-        await prisma.apiTest.update({
-          where: { id: apiTest.id },
-          data: {
-            status: 'SUCCESS',
-            duration: Date.now() - apiTest.startedAt.getTime()
-          }
-        })
       } catch (error) {
         console.error('Erreur lors de l\'exécution du test programmé:', error)
       }
