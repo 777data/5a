@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useRouter } from "next/navigation"
 
 const cronLocalization = {
   everyText: "chaque",
@@ -133,7 +134,7 @@ type ScheduledTestFormProps = {
   environments: Environment[]
   authentications: Authentication[]
   initialData?: {
-    id?: string
+    id: string
     collectionId: string[]
     environmentId: string
     authenticationId?: string
@@ -148,6 +149,7 @@ export function ScheduledTestForm({
   initialData,
 }: ScheduledTestFormProps) {
   const { toast } = useToast()
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [cronError, setCronError] = useState<string>()
 
@@ -164,25 +166,26 @@ export function ScheduledTestForm({
   const onSubmit = async (data: ScheduledTestFormData) => {
     setIsLoading(true)
     try {
-      const response = await fetch('/api/scheduled-tests' + (initialData?.id ? `/${initialData.id}` : ''), {
+      const response = await fetch(initialData?.id ? `/api/scheduled-tests/${initialData.id}` : '/api/scheduled-tests', {
         method: initialData?.id ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...data,
-          id: initialData?.id,
-        }),
+        body: JSON.stringify(data),
       })
 
       if (!response.ok) {
-        throw new Error(initialData ? 'Erreur lors de la modification du test programmé' : 'Erreur lors de la création du test programmé')
+        const errorData = await response.json()
+        throw new Error(errorData.error || (initialData ? 'Erreur lors de la modification du test programmé' : 'Erreur lors de la création du test programmé'))
       }
 
       toast({
         title: initialData ? "Test programmé modifié" : "Test programmé créé",
         description: initialData ? "Le test a été modifié avec succès." : "Le test a été programmé avec succès.",
       })
+
+      router.push('/scheduled-tests')
+      router.refresh()
     } catch (error) {
       toast({
         variant: "destructive",

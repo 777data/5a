@@ -72,73 +72,11 @@ export async function POST(request: Request) {
   }
 }
 
-export async function PUT(request: Request) {
-  try {
-    const cookieStore = await cookies()
-    const activeApplicationId = cookieStore.get('activeApplicationId')
-
-    if (!activeApplicationId?.value) {
-      return new NextResponse("Application non sélectionnée", { status: 400 })
-    }
-
-    const json = await request.json()
-    const body = scheduledTestSchema.parse(json)
-
-    if (!json.id) {
-      return new NextResponse("ID du test programmé manquant", { status: 400 })
-    }
-
-    // Vérifier que les collections appartiennent bien à l'application active
-    const collections = await prisma.collection.findMany({
-      where: {
-        id: { in: body.collectionId },
-        applicationId: activeApplicationId.value,
-      },
-    })
-
-    if (collections.length !== body.collectionId.length) {
-      return new NextResponse("Collections invalides", { status: 400 })
-    }
-
-    const scheduledTest = await prisma.scheduledTest.update({
-      where: {
-        id: json.id,
-      },
-      data: {
-        collections: {
-          set: body.collectionId.map(id => ({ id })),
-        },
-        environment: {
-          connect: { id: body.environmentId },
-        },
-        authentication: body.authenticationId
-          ? { connect: { id: body.authenticationId } }
-          : { disconnect: true },
-        cronExpression: body.cronExpression,
-      },
-      include: {
-        collections: true,
-        environment: true,
-        authentication: true,
-      },
-    })
-
-    // Mettre à jour la tâche CRON
-    cronService.stopTask(json.id)
-    cronService.scheduleTest(scheduledTest)
-
-    return NextResponse.json(scheduledTest)
-  } catch (error) {
-    console.error('Error in PUT /api/scheduled-tests:', error)
-    return new NextResponse(null, { status: 500 })
-  }
-}
-
 export async function GET() {
   try {
     const scheduledTests = await prisma.scheduledTest.findMany({
       include: {
-        collection: {
+        collections: {
           include: {
             application: true
           }

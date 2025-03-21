@@ -69,6 +69,7 @@ export default async function EditScheduledTestPage({
         environments={application.environments}
         authentications={application.authentications}
         initialData={{
+          id: scheduledTest.id,
           collectionId: scheduledTest.collections.map(col => col.id),
           environmentId: scheduledTest.environmentId,
           authenticationId: scheduledTest.authenticationId || undefined,
