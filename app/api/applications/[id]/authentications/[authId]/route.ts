@@ -1,11 +1,23 @@
 import { prisma } from "@/lib/prisma"
 import { NextResponse } from "next/server"
-import { z } from "zod"
+import * as z from "zod"
 
 const updateAuthenticationSchema = z.object({
-  name: z.string().min(1),
-  token: z.string().min(1),
-  apiKey: z.string().min(1),
+  name: z.string().min(1, "Le nom est requis").optional(),
+  type: z.enum(["API_KEY", "BEARER_TOKEN"]).optional(),
+  apiKey: z.string().min(1, "La clé API est requise").nullish(),
+  token: z.string().min(1, "Le token est requis").nullish(),
+}).refine((data) => {
+  // Si le type est spécifié, vérifier que le champ correspondant est présent
+  if (data.type === "API_KEY" && data.apiKey === undefined) {
+    return false
+  }
+  if (data.type === "BEARER_TOKEN" && data.token === undefined) {
+    return false
+  }
+  return true
+}, {
+  message: "La clé API est requise pour le type API_KEY, et le token est requis pour le type BEARER_TOKEN"
 })
 
 export async function GET(request: Request) {
@@ -44,20 +56,19 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
   try {
     // Extraire les paramètres de l'URL
-    const url = new URL(request.url);
-    const segments = url.pathname.split('/');
-    const applicationId = segments[segments.indexOf("applications") + 1];
-    const authId = segments[segments.indexOf("authentications") + 2];
-    
+    const url = new URL(request.url)
+    const segments = url.pathname.split('/')
+    const applicationId = segments[segments.indexOf("applications") + 1]
+    const authId = segments[segments.indexOf("authentications") + 1]
+
     const json = await request.json()
     const body = updateAuthenticationSchema.parse(json)
 
     // Vérifier si l'authentification existe
     const existingAuth = await prisma.authentication.findUnique({
       where: {
-        id: authId,
-        applicationId: applicationId,
-      },
+        id: authId
+      }
     })
 
     if (!existingAuth) {
@@ -67,45 +78,32 @@ export async function PUT(request: Request) {
       )
     }
 
-    // Vérifier si le nouveau nom est déjà utilisé
-    if (body.name !== existingAuth.name) {
-      const duplicateName = await prisma.authentication.findFirst({
-        where: {
-          name: body.name,
-          id: { not: authId },
-        },
-      })
-
-      if (duplicateName) {
-        return NextResponse.json(
-          { error: "Une authentification avec ce nom existe déjà" },
-          { status: 400 }
-        )
-      }
+    // Vérifier que l'authentification appartient bien à l'application
+    if (existingAuth.applicationId !== applicationId) {
+      return NextResponse.json(
+        { error: "Cette authentification n'appartient pas à cette application" },
+        { status: 403 }
+      )
     }
 
     // Mettre à jour l'authentification
-    const authentication = await prisma.authentication.update({
+    const updatedAuth = await prisma.authentication.update({
       where: {
-        id: authId,
+        id: authId
       },
-      data: {
-        name: body.name,
-        token: body.token,
-        apiKey: body.apiKey,
-      },
+      data: body
     })
 
-    return NextResponse.json(authentication)
+    return NextResponse.json(updatedAuth)
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Données invalides", details: error.flatten() },
+        { error: "Données invalides", issues: error.issues },
         { status: 400 }
       )
     }
 
-    console.error('[UPDATE_AUTHENTICATION]', error)
+    console.error("[AUTHENTICATIONS_PUT]", error)
     return NextResponse.json(
       { error: "Une erreur est survenue lors de la modification de l'authentification" },
       { status: 500 }
@@ -116,36 +114,43 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
   try {
     // Extraire les paramètres de l'URL
-    const url = new URL(request.url);
-    const segments = url.pathname.split('/');
-    const applicationId = segments[segments.indexOf("applications") + 1];
-    const authId = segments[segments.indexOf("authentications") + 2];
+    const url = new URL(request.url)
+    const segments = url.pathname.split('/')
+    const applicationId = segments[segments.indexOf("applications") + 1]
+    const authId = segments[segments.indexOf("authentications") + 1]
 
     // Vérifier si l'authentification existe
-    const authentication = await prisma.authentication.findUnique({
+    const existingAuth = await prisma.authentication.findUnique({
       where: {
-        id: authId,
-        applicationId: applicationId,
-      },
+        id: authId
+      }
     })
 
-    if (!authentication) {
+    if (!existingAuth) {
       return NextResponse.json(
         { error: "Authentification non trouvée" },
         { status: 404 }
       )
     }
 
+    // Vérifier que l'authentification appartient bien à l'application
+    if (existingAuth.applicationId !== applicationId) {
+      return NextResponse.json(
+        { error: "Cette authentification n'appartient pas à cette application" },
+        { status: 403 }
+      )
+    }
+
     // Supprimer l'authentification
     await prisma.authentication.delete({
       where: {
-        id: authId,
-      },
+        id: authId
+      }
     })
 
     return new NextResponse(null, { status: 204 })
   } catch (error) {
-    console.error('[DELETE_AUTHENTICATION]', error)
+    console.error("[AUTHENTICATIONS_DELETE]", error)
     return NextResponse.json(
       { error: "Une erreur est survenue lors de la suppression de l'authentification" },
       { status: 500 }

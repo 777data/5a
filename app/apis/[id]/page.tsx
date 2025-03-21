@@ -18,12 +18,13 @@ export default async function EditApiPage({
   }
 
   const api = await prisma.api.findUnique({
-    where: {
-      id,
-    },
+    where: { id },
+    include: {
+      collection: true
+    }
   })
 
-  if (!api || api.applicationId !== activeApplicationId) {
+  if (!api || api.collection.applicationId !== activeApplicationId) {
     notFound()
   }
   

@@ -275,7 +275,7 @@ export function ApiTable({
                         size="icon"
                         className="h-8 w-8"
                         title="Éditer"
-                        onClick={() => router.push(`/apis/${api.id}/edit`)}
+                        onClick={() => router.push(`/applications/${applicationId}/apis/${api.id}/edit`)}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>

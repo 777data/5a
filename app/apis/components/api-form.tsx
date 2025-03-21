@@ -37,7 +37,7 @@ const formSchema = z.object({
   method: z.enum(["GET", "POST", "PUT", "DELETE", "PATCH"]),
   headers: z.array(headerSchema).optional(),
   body: z.string().optional(),
-  collectionId: z.string().optional(),
+  collectionId: z.string().min(1, "La collection est requise"),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -50,7 +50,7 @@ type Api = {
   method: string
   headers: Record<string, string>
   body: unknown
-  collectionId?: string | null
+  collectionId: string
   createdAt: Date
 }
 
@@ -101,7 +101,7 @@ export function ApiForm({ api, applicationId, initialCollectionId }: ApiFormProp
       method: (api?.method as "GET" | "POST" | "PUT" | "DELETE" | "PATCH") ?? "GET",
       headers: api?.headers ? Object.entries(api.headers).map(([key, value]) => ({ key, value: value as string })) : [],
       body: api?.body ? JSON.stringify(api.body, null, 2) : "",
-      collectionId: api?.collectionId || initialCollectionId || "none",
+      collectionId: api?.collectionId || initialCollectionId || "",
     },
   })
 
@@ -158,7 +158,6 @@ export function ApiForm({ api, applicationId, initialCollectionId }: ApiFormProp
             ...data,
             headers: headersObject,
             body: bodyObject,
-            collectionId: data.collectionId === "none" ? null : data.collectionId,
           }),
         }
       )

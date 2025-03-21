@@ -1,27 +1,22 @@
-import { cookies } from "next/headers"
-import { notFound, redirect } from "next/navigation"
+import { notFound } from "next/navigation"
 import { prisma } from "@/lib/prisma"
-import { ApiForm } from "../../components/api-form"
+import { ApiForm } from "@/app/apis/components/api-form"
 import { PageParams } from "@/types/next"
 
-export default async function EditApiPage({ params }: PageParams<{ id: string }>) {
-  // Attendre les paramètres de route avant de les utiliser
-  const { id } = await params
+export default async function EditApiPage({ params }: PageParams<{ id: string, apiId: string }>) {
+  const { id: applicationId, apiId } = await params
   
-  const cookieStore = await cookies()
-  const activeApplicationId = cookieStore.get('activeApplicationId')?.value
-
-  if (!activeApplicationId) {
-    redirect('/collections')
-  }
-
+  // Vérifier si l'API existe et appartient à l'application via sa collection
   const api = await prisma.api.findUnique({
     where: {
-      id,
+      id: apiId
     },
+    include: {
+      collection: true
+    }
   })
 
-  if (!api || api.applicationId !== activeApplicationId) {
+  if (!api || api.collection.applicationId !== applicationId) {
     notFound()
   }
 
@@ -29,7 +24,8 @@ export default async function EditApiPage({ params }: PageParams<{ id: string }>
   const formattedApi = {
     ...api,
     headers: api.headers ? (api.headers as Record<string, string>) : {},
-    body: api.body
+    body: api.body,
+    collectionId: api.collectionId
   }
 
   return (
@@ -42,7 +38,7 @@ export default async function EditApiPage({ params }: PageParams<{ id: string }>
       </div>
 
       <div className="max-w-2xl">
-        <ApiForm api={formattedApi} applicationId={activeApplicationId} />
+        <ApiForm api={formattedApi} applicationId={applicationId} />
       </div>
     </div>
   )

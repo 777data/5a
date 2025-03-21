@@ -11,7 +11,6 @@ model Application {
   id            String          @id @default(cuid())
   name          String
   environments  Environment[]
-  apis          Api[]
   authentications Authentication[]
   apiTests      ApiTest[]
   collections   Collection[]
@@ -41,10 +40,8 @@ model Api {
   headers       Json?
   body          Json?
   order         Int            @default(0)
-  application   Application     @relation(fields: [applicationId], references: [id])
-  applicationId String
-  collection    Collection?     @relation(fields: [collectionId], references: [id])
-  collectionId  String?
+  collection    Collection      @relation(fields: [collectionId], references: [id])
+  collectionId  String
   testResults   ApiTestResult[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt

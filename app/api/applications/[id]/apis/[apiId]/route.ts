@@ -1,76 +1,70 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { z } from "zod"
+import * as z from "zod"
 
 const apiSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
-  url: z.string().min(1, "L&apos;URL est requise").url("L&apos;URL n&apos;est pas valide"),
+  url: z.string().min(1, "L'URL est requise").url("L'URL n'est pas valide"),
   method: z.enum(["GET", "POST", "PUT", "DELETE", "PATCH"]),
   headers: z.record(z.string()).optional(),
   body: z.any().optional(),
-  collectionId: z.string().nullable().optional(),
+  collectionId: z.string().min(1, "La collection est requise"),
 })
 
 export async function PUT(request: Request) {
   try {
     // Extraire les paramètres de l'URL
-    const url = new URL(request.url);
-    const segments = url.pathname.split('/');
-    const id = segments[segments.indexOf("applications") + 1];
-    const apiId = segments[segments.indexOf("apis") + 1];
-    
-    // Log pour le débogage
-    console.log('URL segments:', {
-      segments,
-      applicationId: id,
-      apiId,
-      fullPath: url.pathname
-    });
+    const url = new URL(request.url)
+    const segments = url.pathname.split('/')
+    const applicationId = segments[segments.indexOf("applications") + 1]
+    const apiId = segments[segments.indexOf("apis") + 1]
 
     const json = await request.json()
     const body = apiSchema.parse(json)
 
-    // Vérifier si l'API existe et appartient à l'application
-    const api = await prisma.application.findFirst({
+    // Vérifier si l'API existe et appartient à l'application via sa collection
+    const api = await prisma.api.findUnique({
       where: {
-        id,
-        apis: {
-          some: {
-            id: apiId
-          }
-        }
+        id: apiId
       },
-      select: {
-        apis: {
-          where: {
-            id: apiId
-          }
-        }
+      include: {
+        collection: true
       }
     })
 
-    if (!api || api.apis.length === 0) {
+    if (!api) {
       return NextResponse.json(
         { error: "API introuvable" },
         { status: 404 }
       )
     }
 
-    // Si collectionId est fourni, vérifier si la collection existe et appartient à l'application
-    if (body.collectionId) {
-      const collection = await prisma.collection.findFirst({
-        where: {
-          id: body.collectionId,
-          applicationId: id,
-        },
-      })
+    if (api.collection.applicationId !== applicationId) {
+      return NextResponse.json(
+        { error: "Cette API n'appartient pas à cette application" },
+        { status: 403 }
+      )
+    }
 
-      if (!collection) {
-        return NextResponse.json(
-          { error: "Collection introuvable ou n&apos;appartient pas à cette application" },
-          { status: 404 }
-        )
+    // Vérifier que la nouvelle collection appartient à l'application
+    const collection = await prisma.collection.findUnique({
+      where: {
+        id: body.collectionId
       }
+    })
+
+    if (!collection) {
+      return NextResponse.json(
+        { error: "Collection introuvable" },
+        { status: 404 }
+      )
+    }
+
+    if (collection.applicationId !== applicationId) {
+      return NextResponse.json(
+        { error: "Cette collection n'appartient pas à cette application" },
+        { status: 403 }
+      )
     }
 
     // Mettre à jour l'API
@@ -82,7 +76,7 @@ export async function PUT(request: Request) {
         name: body.name,
         url: body.url,
         method: body.method,
-        headers: body.headers,
+        headers: body.headers || {},
         body: body.body,
         collectionId: body.collectionId
       }
@@ -90,15 +84,16 @@ export async function PUT(request: Request) {
 
     return NextResponse.json(updatedApi)
   } catch (error) {
-    console.error("Erreur lors de la modification de l&apos;API:", error)
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Données invalides", details: error.errors },
+        { error: "Données invalides", issues: error.issues },
         { status: 400 }
       )
     }
+
+    console.error("[APIS_PUT]", error)
     return NextResponse.json(
-      { error: "Une erreur est survenue lors de la modification de l&apos;API" },
+      { error: "Une erreur est survenue lors de la modification de l'API" },
       { status: 500 }
     )
   }
@@ -107,56 +102,54 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
   try {
     // Extraire les paramètres de l'URL
-    const url = new URL(request.url);
-    const segments = url.pathname.split('/');
-    const id = segments[segments.indexOf("applications") + 1];
-    const apiId = segments[segments.indexOf("apis") + 1];
+    const url = new URL(request.url)
+    const segments = url.pathname.split('/')
+    const applicationId = segments[segments.indexOf("applications") + 1]
+    const apiId = segments[segments.indexOf("apis") + 1]
     
-    // Vérifier si l'API existe et appartient à l'application
-    const api = await prisma.application.findFirst({
+    // Vérifier si l'API existe et appartient à l'application via sa collection
+    const api = await prisma.api.findUnique({
       where: {
-        id,
-        apis: {
-          some: {
-            id: apiId
-          }
-        }
+        id: apiId
       },
-      select: {
-        apis: {
-          where: {
-            id: apiId
-          }
-        }
+      include: {
+        collection: true
       }
     })
 
-    if (!api || api.apis.length === 0) {
+    if (!api) {
       return NextResponse.json(
         { error: "API introuvable" },
         { status: 404 }
       )
     }
 
+    if (api.collection.applicationId !== applicationId) {
+      return NextResponse.json(
+        { error: "Cette API n'appartient pas à cette application" },
+        { status: 403 }
+      )
+    }
+
     // Supprimer d'abord tous les résultats de test associés à cette API
     await prisma.apiTestResult.deleteMany({
       where: {
-        apiId,
-      },
+        apiId
+      }
     })
 
     // Supprimer l'API
     await prisma.api.delete({
       where: {
-        id: apiId,
-      },
+        id: apiId
+      }
     })
 
-    return NextResponse.json({ message: "API supprimée avec succès" })
+    return new NextResponse(null, { status: 204 })
   } catch (error) {
-    console.error("Erreur lors de la suppression de l&apos;API:", error)
+    console.error("[APIS_DELETE]", error)
     return NextResponse.json(
-      { error: "Une erreur est survenue lors de la suppression de l&apos;API" },
+      { error: "Une erreur est survenue lors de la suppression de l'API" },
       { status: 500 }
     )
   }

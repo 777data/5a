@@ -94,9 +94,13 @@ export async function DELETE(request: Request) {
         where: { applicationId: id }
       })
 
-      // 6. Supprimer les APIs
+      // 6. Supprimer les APIs via les collections
       await tx.api.deleteMany({
-        where: { applicationId: id }
+        where: {
+          collection: {
+            applicationId: id
+          }
+        }
       })
 
       // 7. Supprimer les collections
@@ -106,7 +110,7 @@ export async function DELETE(request: Request) {
 
       // 8. Finalement, supprimer l'application
       await tx.application.delete({
-        where: { id: id }
+        where: { id }
       })
     })
 
