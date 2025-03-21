@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Edit, Trash2 } from "lucide-react"
+import { Edit, Trash2, Users } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -88,7 +88,7 @@ export function OrganizationsTable({ organizations }: OrganizationsTableProps) {
               <TableHead>Nom</TableHead>
               <TableHead>Membres</TableHead>
               <TableHead>Date de création</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
+              <TableHead className="w-[150px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -114,6 +114,15 @@ export function OrganizationsTable({ organizations }: OrganizationsTableProps) {
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      title="Voir les membres"
+                      onClick={() => router.push(`/admin/organizations/${org.id}/members`)}
+                    >
+                      <Users className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
