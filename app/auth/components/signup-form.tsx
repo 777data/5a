@@ -74,7 +74,7 @@ export function SignUpForm() {
         description: "Votre compte a été créé avec succès.",
       })
 
-      router.push("/organizations")
+      router.push("/")
       router.refresh()
     } catch (error) {
       console.error("Error:", error)

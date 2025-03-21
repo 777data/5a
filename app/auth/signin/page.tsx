@@ -66,7 +66,7 @@ export default function SignInPage() {
   const handleGoogleSignIn = async () => {
     try {
       const result = await signIn('google', {
-        callbackUrl: '/organizations',
+        callbackUrl: '/',
         redirect: true,
       })
       
@@ -82,7 +82,7 @@ export default function SignInPage() {
     try {
       setIsLoading(true)
 
-      const callbackUrl = searchParams?.get("callbackUrl") || "/organizations"
+      const callbackUrl = searchParams?.get("callbackUrl") || "/"
       console.log('Tentative de connexion avec:', { email: data.email, callbackUrl })
       
       const result = await signIn("credentials", {
