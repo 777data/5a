@@ -35,7 +35,7 @@ export default async function OrganizationsPage() {
           </p>
         </div>
         <Button asChild>
-          <Link href="/admin/organizations/new">
+          <Link href="/admin/organizations/new/edit">
             <Plus className="h-4 w-4 mr-2" />
             Ajouter
           </Link>

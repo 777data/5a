@@ -12,27 +12,39 @@ interface EditOrganizationPageProps {
 export default async function EditOrganizationPage({
   params,
 }: EditOrganizationPageProps) {
-  const organization = await prisma.organization.findUnique({
-    where: {
-      id: params.organizationId,
-    },
-  })
+  const isNew = params.organizationId === "new"
 
-  if (!organization) {
+  const organization = !isNew
+    ? await prisma.organization.findUnique({
+        where: {
+          id: params.organizationId,
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      })
+    : null
+
+  if (!isNew && !organization) {
     notFound()
   }
 
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Modifier l&apos;organisation</h1>
+        <h1 className="text-2xl font-bold">
+          {isNew ? "Nouvelle organisation" : "Modifier l'organisation"}
+        </h1>
         <p className="text-sm text-gray-500 mt-1">
-          Modifiez les informations de l&apos;organisation
+          {isNew
+            ? "Créez une nouvelle organisation"
+            : "Modifiez les informations de l'organisation"}
         </p>
       </div>
 
-      <div className="rounded-lg border bg-white p-6">
-        <OrganizationForm organization={organization} />
+      <div className="max-w-2xl">
+        <OrganizationForm organization={organization || undefined} />
       </div>
     </div>
   )
