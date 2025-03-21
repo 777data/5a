@@ -1,21 +1,21 @@
 'use client'
 
 import { signOut, useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { usePathname } from 'next/navigation'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { LogOut, User } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { User } from 'lucide-react'
+import Link from 'next/link'
 
 export function ProfileMenu() {
-  const router = useRouter()
   const { data: session } = useSession()
+  const pathname = usePathname()
+  const isAdminRoute = pathname?.startsWith("/admin")
 
   if (!session?.user) return null
 
@@ -49,6 +49,13 @@ export function ProfileMenu() {
           <User className="mr-2 h-4 w-4" />
           Mon profil
         </DropdownMenuItem>
+        {session.user.role === "SUPER_ADMIN" && (
+          <DropdownMenuItem asChild>
+            <Link href={isAdminRoute ? "/dashboard" : "/admin/organizations"}>
+              {isAdminRoute ? "Retour au dashboard" : "Administration"}
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem
           onClick={() => signOut({ callbackUrl: '/auth/signin' })}
           className="text-red-600 focus:text-red-600 cursor-pointer"
