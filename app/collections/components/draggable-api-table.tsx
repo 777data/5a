@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { useApiTest } from "@/app/hooks/use-api-test"
-import { ApiToTest } from "@/app/services/api-test.service"
+import { ApiToTest } from "@/lib/api-test.service"
 import { ApiTestDialog } from "@/app/components/api-test-dialog"
 import { Edit, Play, Trash2, Save, GripVertical } from "lucide-react"
 import { 

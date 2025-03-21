@@ -2,11 +2,12 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { 
-  ApiToTest, 
-  TestResults, 
-  testMultipleApis 
-} from '@/app/services/api-test.service'
+import {
+  ApiToTest,
+  TestParams,
+  TestResults,
+  testMultipleApis
+} from '@/lib/api-test.service'
 import { prisma } from '@/lib/prisma'
 
 // Définir un type pour les données de réponse

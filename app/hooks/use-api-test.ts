@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
-import { ApiToTest, TestResults } from '@/app/services/api-test.service'
+import { ApiToTest, TestResults } from '@/lib/api-test.service'
 import { 
   testApis as testApisAction, 
   testSingleApi as testSingleApiAction, 
