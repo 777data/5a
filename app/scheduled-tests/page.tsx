@@ -62,12 +62,13 @@ export default async function ScheduledTestsPage() {
             Application : {application.name}
           </p>
         </div>
-        <Button asChild>
-          <Link href="/scheduled-tests/new">
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter
-          </Link>
-        </Button>
+        <Link
+          href="/scheduled-tests/new"
+          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
+        >
+          <Plus className="h-5 w-5" />
+          Créer un test programmé
+        </Link>
       </div>
 
       <ScheduledTestTable
