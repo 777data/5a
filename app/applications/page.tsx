@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma"
 import { ApplicationTable } from "./components/application-table"
-import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Plus } from "lucide-react"
 

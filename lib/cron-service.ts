@@ -1,6 +1,17 @@
 import cron from 'node-cron'
 import { prisma } from './prisma'
 
+type ScheduledTest = {
+  id: string
+  cronExpression: string
+  environmentId: string
+  authenticationId?: string | null
+  collections: Array<{
+    id: string
+    applicationId: string
+  }>
+}
+
 class CronService {
   private tasks: Map<string, cron.ScheduledTask>
 
@@ -30,7 +41,7 @@ class CronService {
     })
   }
 
-  scheduleTest(test: any) {
+  scheduleTest(test: ScheduledTest) {
     // Arrêter la tâche existante si elle existe
     this.stopTask(test.id)
 

@@ -151,7 +151,6 @@ export function ScheduledTestForm({
   const { toast } = useToast()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-  const [cronError, setCronError] = useState<string>()
 
   const form = useForm<ScheduledTestFormData>({
     resolver: zodResolver(scheduledTestSchema),

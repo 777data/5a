@@ -1,7 +1,6 @@
 import { cookies } from "next/headers"
 import { prisma } from "@/lib/prisma"
 import { TestHistoryTable } from "./components/test-history-table"
-import { notFound } from "next/navigation"
 
 export default async function TestHistoryPage() {
   const cookieStore = await cookies()
