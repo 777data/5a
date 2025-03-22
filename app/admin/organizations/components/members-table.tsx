@@ -40,20 +40,29 @@ export function MembersTable({ members, organizationId }: MembersTableProps) {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState<string | null>(null)
 
-  const handleRemoveMember = async (memberId: string) => {
+  const handleRemoveMember = async (memberId: string, status: 'active' | 'pending') => {
     try {
       setIsLoading(memberId)
-      const response = await fetch(`/api/organizations/${organizationId}/members/${memberId}`, {
+      const endpoint = status === 'active' 
+        ? `/api/organizations/${organizationId}/members/${memberId}`
+        : `/api/admin/organizations/${organizationId}/invitations/${memberId}`
+
+      const response = await fetch(endpoint, {
         method: 'DELETE',
       })
 
       if (!response.ok) {
-        throw new Error("Erreur lors de la suppression du membre")
+        throw new Error(status === 'active' 
+          ? "Erreur lors de la suppression du membre" 
+          : "Erreur lors de l'annulation de l'invitation"
+        )
       }
 
       toast({
-        title: "Membre supprimé",
-        description: "Le membre a été supprimé de l'organisation",
+        title: status === 'active' ? "Membre supprimé" : "Invitation annulée",
+        description: status === 'active' 
+          ? "Le membre a été supprimé de l'organisation"
+          : "L'invitation a été annulée",
       })
 
       // Recharger la page pour mettre à jour la liste
@@ -72,7 +81,7 @@ export function MembersTable({ members, organizationId }: MembersTableProps) {
   const handleResendInvitation = async (memberId: string, email: string) => {
     try {
       setIsLoading(memberId)
-      const response = await fetch(`/api/organizations/${organizationId}/invitations/${memberId}/resend`, {
+      const response = await fetch(`/api/admin/organizations/${organizationId}/invitations/${memberId}/resend`, {
         method: 'POST',
       })
 
@@ -149,7 +158,7 @@ export function MembersTable({ members, organizationId }: MembersTableProps) {
                         Renvoyer l'invitation
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => handleRemoveMember(member.id)}
+                        onClick={() => handleRemoveMember(member.id, member.status)}
                         disabled={isLoading === member.id}
                         className="text-destructive"
                       >
@@ -158,7 +167,7 @@ export function MembersTable({ members, organizationId }: MembersTableProps) {
                     </>
                   ) : (
                     <DropdownMenuItem
-                      onClick={() => handleRemoveMember(member.id)}
+                      onClick={() => handleRemoveMember(member.id, member.status)}
                       disabled={isLoading === member.id}
                       className="text-destructive"
                     >
