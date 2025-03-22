@@ -11,14 +11,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, Mail } from "lucide-react"
+import { Mail, Trash2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
 
@@ -115,7 +109,7 @@ export function MembersTable({ members, organizationId }: MembersTableProps) {
           <TableHead>Rôle</TableHead>
           <TableHead>Statut</TableHead>
           <TableHead>Date d'ajout</TableHead>
-          <TableHead className="w-[70px]"></TableHead>
+          <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -137,47 +131,32 @@ export function MembersTable({ members, organizationId }: MembersTableProps) {
                 locale: fr,
               })}
             </TableCell>
-            <TableCell>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="h-8 w-8 p-0"
-                    disabled={isLoading === member.id}
-                  >
-                    <span className="sr-only">Ouvrir le menu</span>
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {member.status === 'pending' ? (
-                    <>
-                      <DropdownMenuItem
-                        onClick={() => member.email && handleResendInvitation(member.id, member.email)}
-                        disabled={isLoading === member.id || !member.email}
-                      >
-                        <Mail className="mr-2 h-4 w-4" />
-                        Renvoyer l'invitation
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleRemoveMember(member.id, member.status)}
-                        disabled={isLoading === member.id}
-                        className="text-destructive"
-                      >
-                        Annuler l'invitation
-                      </DropdownMenuItem>
-                    </>
-                  ) : (
-                    <DropdownMenuItem
-                      onClick={() => handleRemoveMember(member.id, member.status)}
-                      disabled={isLoading === member.id}
-                      className="text-destructive"
-                    >
-                      Retirer de l'organisation
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <TableCell className="text-right space-x-2">
+              {member.status === 'pending' && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => member.email && handleResendInvitation(member.id, member.email)}
+                  disabled={isLoading === member.id || !member.email}
+                  title="Renvoyer l'invitation"
+                >
+                  <Mail className="h-4 w-4" />
+                  <span className="sr-only">Renvoyer l'invitation</span>
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleRemoveMember(member.id, member.status)}
+                disabled={isLoading === member.id}
+                className="text-destructive hover:text-destructive"
+                title={member.status === 'pending' ? "Annuler l'invitation" : "Retirer de l'organisation"}
+              >
+                <Trash2 className="h-4 w-4" />
+                <span className="sr-only">
+                  {member.status === 'pending' ? "Annuler l'invitation" : "Retirer de l'organisation"}
+                </span>
+              </Button>
             </TableCell>
           </TableRow>
         ))}
