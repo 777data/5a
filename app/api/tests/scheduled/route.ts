@@ -17,7 +17,10 @@ export async function POST(request: Request) {
     const activeApplicationId = cookieStore.get('activeApplicationId')
 
     if (!activeApplicationId?.value) {
-      return new NextResponse("Application non sélectionnée", { status: 400 })
+      return NextResponse.json(
+        { error: "Application non sélectionnée" },
+        { status: 400 }
+      )
     }
 
     const json = await request.json()
@@ -32,7 +35,10 @@ export async function POST(request: Request) {
     })
 
     if (collections.length !== body.collectionId.length) {
-      return new NextResponse("Collections invalides", { status: 400 })
+      return NextResponse.json(
+        { error: "Collections invalides" },
+        { status: 400 }
+      )
     }
 
     const scheduledTest = await prisma.scheduledTest.create({
@@ -64,11 +70,17 @@ export async function POST(request: Request) {
     return NextResponse.json(scheduledTest)
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return new NextResponse(JSON.stringify(error.errors), { status: 400 })
+      return NextResponse.json(
+        { error: "Validation error", details: error.errors },
+        { status: 400 }
+      )
     }
 
-    console.error('Error in POST /api/scheduled-tests:', error)
-    return new NextResponse(null, { status: 500 })
+    console.error('Error in POST /api/tests/scheduled:', error)
+    return NextResponse.json(
+      { error: "Une erreur est survenue lors de la création du test programmé" },
+      { status: 500 }
+    )
   }
 }
 

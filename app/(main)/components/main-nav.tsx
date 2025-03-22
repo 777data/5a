@@ -101,7 +101,7 @@ const appLinks = [
     ),
   },
   {
-    href: "/tests/scheduled",
+    href: "/scheduler",
     label: "Tests programmés",
     icon: (
       <svg

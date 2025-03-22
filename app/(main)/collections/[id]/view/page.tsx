@@ -78,7 +78,7 @@ export default async function CollectionDetailPage({ params }: PageParams<{ id: 
           </Button>
           <Button asChild>
             <Link 
-              href={`/apis/new?collectionId=${collection.id}`}
+              href={`/collections/${collection.id}/apis/new`}
             >
               <Plus className="h-4 w-4 mr-2" />
               Ajouter une API

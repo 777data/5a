@@ -16,7 +16,7 @@ export async function DELETE(request: Request) {
     // Extraire les paramètres de l'URL
     const url = new URL(request.url);
     const segments = url.pathname.split('/');
-    const id = segments[segments.indexOf("scheduled-tests") + 1];
+    const id = segments[segments.indexOf("scheduled") + 1];
 
     console.log('DELETE request received for ID:', id)
 
@@ -51,7 +51,7 @@ export async function DELETE(request: Request) {
 
     return new NextResponse(null, { status: 204 })
   } catch (error) {
-    console.error('Error in DELETE /api/scheduled-tests/[id]:', error)
+    console.error('Error in DELETE /api/tests/scheduled/[id]:', error)
     return new NextResponse(null, { status: 500 })
   }
 }
@@ -61,7 +61,7 @@ export async function PUT(request: Request) {
     // Extraire les paramètres de l'URL
     const url = new URL(request.url);
     const segments = url.pathname.split('/');
-    const id = segments[segments.indexOf("scheduled-tests") + 1];
+    const id = segments[segments.indexOf("scheduled") + 1];
     
     const cookieStore = await cookies()
     const activeApplicationId = cookieStore.get('activeApplicationId')
@@ -132,7 +132,7 @@ export async function PUT(request: Request) {
 
     return NextResponse.json(scheduledTest)
   } catch (error) {
-    console.error('Error in PUT /api/scheduled-tests/[id]:', error)
+    console.error('Error in PUT /api/tests/scheduled/[id]:', error)
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors }, { status: 400 })
     }

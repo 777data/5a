@@ -62,7 +62,7 @@ export default async function ScheduledTestsPage() {
           </p>
         </div>
         <Link
-          href="/tests/scheduled/new"
+          href="/scheduler/new"
           className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
         >
           <Plus className="h-5 w-5" />

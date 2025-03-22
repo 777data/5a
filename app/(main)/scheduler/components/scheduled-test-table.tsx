@@ -58,7 +58,7 @@ export function ScheduledTestTable({ scheduledTests }: ScheduledTestTableProps) 
   const handleDelete = async (test: ScheduledTest) => {
     try {
       setIsLoading(test.id)
-      const response = await fetch(`/api/scheduled-tests/${test.id}`, {
+      const response = await fetch(`/api/tests/scheduled/${test.id}`, {
         method: 'DELETE',
       })
 
@@ -121,7 +121,7 @@ export function ScheduledTestTable({ scheduledTests }: ScheduledTestTableProps) 
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => router.push(`/tests/scheduled/${test.id}`)}
+                      onClick={() => router.push(`/scheduler/${test.id}`)}
                       className="h-8 w-8"
                       disabled={isLoading === test.id}
                     >

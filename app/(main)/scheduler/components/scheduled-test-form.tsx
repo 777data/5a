@@ -165,7 +165,7 @@ export function ScheduledTestForm({
   const onSubmit = async (data: ScheduledTestFormData) => {
     setIsLoading(true)
     try {
-      const response = await fetch(initialData?.id ? `/api/scheduled-tests/${initialData.id}` : '/api/scheduled-tests', {
+      const response = await fetch(initialData?.id ? `/api/tests/scheduled/${initialData.id}` : '/api/tests/scheduled', {
         method: initialData?.id ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -173,18 +173,32 @@ export function ScheduledTestForm({
         body: JSON.stringify(data),
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || (initialData ? 'Erreur lors de la modification du test programmé' : 'Erreur lors de la création du test programmé'))
+      let errorMessage: string | undefined;
+      
+      try {
+        const responseData = await response.json();
+        if (!response.ok) {
+          errorMessage = responseData.error || (initialData ? 'Erreur lors de la modification du test programmé' : 'Erreur lors de la création du test programmé');
+          if (responseData.details) {
+            errorMessage += '\n' + JSON.stringify(responseData.details);
+          }
+          throw new Error(errorMessage);
+        }
+
+        toast({
+          title: initialData ? "Test programmé modifié" : "Test programmé créé",
+          description: initialData ? "Le test a été modifié avec succès." : "Le test a été programmé avec succès.",
+        })
+
+        router.push('/scheduler')
+        router.refresh()
+      } catch (parseError) {
+        // Si on ne peut pas parser la réponse comme du JSON
+        if (!response.ok) {
+          throw new Error('Une erreur est survenue lors de la communication avec le serveur');
+        }
+        throw parseError;
       }
-
-      toast({
-        title: initialData ? "Test programmé modifié" : "Test programmé créé",
-        description: initialData ? "Le test a été modifié avec succès." : "Le test a été programmé avec succès.",
-      })
-
-      router.push('/tests/scheduled')
-      router.refresh()
     } catch (error) {
       toast({
         variant: "destructive",
