@@ -23,6 +23,10 @@ const signUpSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
   email: z.string().email("Email invalide"),
   password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Les mots de passe ne correspondent pas",
+  path: ["confirmPassword"],
 })
 
 type SignUpValues = z.infer<typeof signUpSchema>
@@ -38,6 +42,7 @@ export function SignUpForm() {
       name: "",
       email: "",
       password: "",
+      confirmPassword: "",
     },
   })
 
@@ -45,12 +50,14 @@ export function SignUpForm() {
     try {
       setIsLoading(true)
 
+      const { confirmPassword, ...submitData } = data
+
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(submitData),
       })
 
       if (!response.ok) {
@@ -116,6 +123,20 @@ export function SignUpForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Mot de passe</FormLabel>
+              <FormControl>
+                <Input type="password" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="confirmPassword"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Confirmer le mot de passe</FormLabel>
               <FormControl>
                 <Input type="password" {...field} />
               </FormControl>
