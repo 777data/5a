@@ -25,7 +25,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { useApiTest } from "@/app/hooks/use-api-test"
 import { ApiToTest } from "@/lib/api-test.service"
-import { ApiTestDialog } from "@/app/components/api-test-dialog"
+import { ApiTestDialog } from "@/app/(main)/components/api-test-dialog"
 import { Edit, Play, Trash2, Save, GripVertical } from "lucide-react"
 import { 
   DragDropContext, 

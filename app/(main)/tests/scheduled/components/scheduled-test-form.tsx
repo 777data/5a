@@ -183,7 +183,7 @@ export function ScheduledTestForm({
         description: initialData ? "Le test a été modifié avec succès." : "Le test a été programmé avec succès.",
       })
 
-      router.push('/scheduled-tests')
+      router.push('/tests/scheduled')
       router.refresh()
     } catch (error) {
       toast({
