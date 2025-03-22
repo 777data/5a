@@ -58,23 +58,14 @@ export function SignUpForm() {
         throw new Error(responseData.error || "Une erreur est survenue")
       }
 
-      // Connexion automatique après l'inscription
-      const result = await signIn("credentials", {
-        email: data.email,
-        password: data.password,
-        redirect: false,
-      })
-
-      if (result?.error) {
-        throw new Error(result.error)
-      }
-
       toast({
         title: "Compte créé",
-        description: "Votre compte a été créé avec succès.",
+        description: "Un email de vérification a été envoyé à votre adresse. Veuillez vérifier votre boîte de réception pour activer votre compte.",
+        duration: 10000,
       })
 
-      router.push("/")
+      // Redirection vers la page de connexion avec l'email pré-rempli
+      router.push(`/auth/signin?email=${encodeURIComponent(data.email)}`)
       router.refresh()
     } catch (error) {
       console.error("Error:", error)

@@ -46,6 +46,7 @@ export const authOptions: NextAuthOptions = {
             name: true,
             password: true,
             role: true,
+            emailVerified: true,
           }
         });
 
@@ -57,6 +58,10 @@ export const authOptions: NextAuthOptions = {
 
         if (!isPasswordValid) {
           throw new Error('Mot de passe incorrect');
+        }
+
+        if (!user.emailVerified) {
+          throw new Error('Veuillez vérifier votre email avant de vous connecter');
         }
 
         return {

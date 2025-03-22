@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
+import { generateVerificationToken, sendVerificationEmail } from "@/lib/email-verification"
 
 const signupSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
@@ -35,6 +36,7 @@ export async function POST(request: Request) {
         name: body.name,
         email: body.email,
         password: hashedPassword,
+        emailVerified: null, // L'email n'est pas encore vérifié
       },
       select: {
         id: true,
@@ -43,7 +45,14 @@ export async function POST(request: Request) {
       },
     })
 
-    return NextResponse.json(user)
+    // Générer et envoyer le token de vérification
+    const verificationToken = generateVerificationToken(body.email);
+    await sendVerificationEmail(body.email, verificationToken);
+
+    return NextResponse.json({
+      ...user,
+      message: "Un email de vérification a été envoyé à votre adresse email."
+    })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
