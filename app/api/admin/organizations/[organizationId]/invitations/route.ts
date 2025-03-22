@@ -24,6 +24,41 @@ export async function POST(
       )
     }
 
+    // Vérifier si l'utilisateur est déjà membre
+    const existingMember = await prisma.organizationMember.findFirst({
+      where: {
+        organizationId: params.organizationId,
+        user: {
+          email,
+        },
+      },
+    })
+
+    if (existingMember) {
+      return NextResponse.json(
+        { error: "Cet utilisateur est déjà membre de l'organisation" },
+        { status: 400 }
+      )
+    }
+
+    // Vérifier s'il existe déjà une invitation en attente
+    const existingInvitation = await prisma.organizationInvitation.findFirst({
+      where: {
+        organizationId: params.organizationId,
+        email,
+        expiresAt: {
+          gt: new Date(), // invitation non expirée
+        },
+      },
+    })
+
+    if (existingInvitation) {
+      return NextResponse.json(
+        { error: "Une invitation a déjà été envoyée à cet email" },
+        { status: 400 }
+      )
+    }
+
     // Générer un token unique pour l'invitation
     const token = randomUUID()
 

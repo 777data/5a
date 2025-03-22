@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { formatDistanceToNow } from "date-fns"
+import { fr } from "date-fns/locale"
 import {
   Table,
   TableBody,
@@ -10,25 +11,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { Trash2 } from "lucide-react"
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
+import { MoreHorizontal, Mail } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { Badge } from "@/components/ui/badge"
 
-type Member = {
+interface Member {
   id: string
   email: string | null
   name: string | null
   role: string
+  status: 'active' | 'pending'
   createdAt: string
 }
 
@@ -38,123 +37,140 @@ interface MembersTableProps {
 }
 
 export function MembersTable({ members, organizationId }: MembersTableProps) {
-  const router = useRouter()
   const { toast } = useToast()
-  const [memberToDelete, setMemberToDelete] = useState<Member | null>(null)
+  const [isLoading, setIsLoading] = useState<string | null>(null)
 
-  async function deleteMember(member: Member) {
+  const handleRemoveMember = async (memberId: string) => {
     try {
-      const response = await fetch(`/api/admin/organizations/${organizationId}/members/${member.id}`, {
+      setIsLoading(memberId)
+      const response = await fetch(`/api/organizations/${organizationId}/members/${memberId}`, {
         method: 'DELETE',
       })
 
       if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Une erreur est survenue')
+        throw new Error("Erreur lors de la suppression du membre")
       }
 
       toast({
         title: "Membre supprimé",
-        description: `Le membre "${member.email || 'Sans email'}" a été supprimé avec succès.`,
+        description: "Le membre a été supprimé de l'organisation",
       })
 
-      router.refresh()
+      // Recharger la page pour mettre à jour la liste
+      window.location.reload()
     } catch (error) {
-      console.error('Erreur lors de la suppression:', error)
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: error instanceof Error ? error.message : "Une erreur est survenue lors de la suppression",
+        description: error instanceof Error ? error.message : "Une erreur est survenue",
       })
     } finally {
-      setMemberToDelete(null)
+      setIsLoading(null)
     }
   }
 
-  if (members.length === 0) {
-    return (
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Email</TableHead>
-              <TableHead>Nom</TableHead>
-              <TableHead>Rôle</TableHead>
-              <TableHead>Date d&apos;ajout</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow>
-              <TableCell colSpan={5} className="text-center py-6 text-gray-500">
-                Aucun membre dans cette organisation.
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </div>
-    )
+  const handleResendInvitation = async (memberId: string, email: string) => {
+    try {
+      setIsLoading(memberId)
+      const response = await fetch(`/api/organizations/${organizationId}/invitations/${memberId}/resend`, {
+        method: 'POST',
+      })
+
+      if (!response.ok) {
+        throw new Error("Erreur lors du renvoi de l'invitation")
+      }
+
+      toast({
+        title: "Invitation renvoyée",
+        description: "Un nouvel email d'invitation a été envoyé",
+      })
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: error instanceof Error ? error.message : "Une erreur est survenue",
+      })
+    } finally {
+      setIsLoading(null)
+    }
   }
 
   return (
-    <>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Email</TableHead>
-              <TableHead>Nom</TableHead>
-              <TableHead>Rôle</TableHead>
-              <TableHead>Date d&apos;ajout</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {members.map((member) => (
-              <TableRow key={member.id}>
-                <TableCell className="font-medium">{member.email || '-'}</TableCell>
-                <TableCell>{member.name || '-'}</TableCell>
-                <TableCell>{member.role}</TableCell>
-                <TableCell>{new Date(member.createdAt).toLocaleDateString()}</TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                      title="Supprimer"
-                      onClick={() => setMemberToDelete(member)}
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Nom</TableHead>
+          <TableHead>Email</TableHead>
+          <TableHead>Rôle</TableHead>
+          <TableHead>Statut</TableHead>
+          <TableHead>Date d'ajout</TableHead>
+          <TableHead className="w-[70px]"></TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {members.map((member) => (
+          <TableRow key={member.id} className={member.status === 'pending' ? 'bg-muted/50' : ''}>
+            <TableCell>{member.name || '—'}</TableCell>
+            <TableCell>{member.email || '—'}</TableCell>
+            <TableCell>{member.role}</TableCell>
+            <TableCell>
+              {member.status === 'pending' ? (
+                <Badge variant="secondary">En attente</Badge>
+              ) : (
+                <Badge variant="default">Actif</Badge>
+              )}
+            </TableCell>
+            <TableCell>
+              {formatDistanceToNow(new Date(member.createdAt), {
+                addSuffix: true,
+                locale: fr,
+              })}
+            </TableCell>
+            <TableCell>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="h-8 w-8 p-0"
+                    disabled={isLoading === member.id}
+                  >
+                    <span className="sr-only">Ouvrir le menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {member.status === 'pending' ? (
+                    <>
+                      <DropdownMenuItem
+                        onClick={() => member.email && handleResendInvitation(member.id, member.email)}
+                        disabled={isLoading === member.id || !member.email}
+                      >
+                        <Mail className="mr-2 h-4 w-4" />
+                        Renvoyer l'invitation
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleRemoveMember(member.id)}
+                        disabled={isLoading === member.id}
+                        className="text-destructive"
+                      >
+                        Annuler l'invitation
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <DropdownMenuItem
+                      onClick={() => handleRemoveMember(member.id)}
+                      disabled={isLoading === member.id}
+                      className="text-destructive"
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      <AlertDialog open={!!memberToDelete} onOpenChange={() => setMemberToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action est irréversible. Cela supprimera définitivement le membre
-              {memberToDelete?.email && ` "${memberToDelete.email}"`} de l&apos;organisation.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-500 hover:bg-red-600"
-              onClick={() => memberToDelete && deleteMember(memberToDelete)}
-            >
-              Supprimer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+                      Retirer de l'organisation
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   )
 } 
