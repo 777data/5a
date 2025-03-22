@@ -1,9 +1,7 @@
-import { Resend } from 'resend'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { randomUUID } from 'crypto'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
+import { sendInvitationEmail } from '@/lib/send-invitation-email'
 
 export async function POST(
   request: Request,
@@ -73,32 +71,23 @@ export async function POST(
     })
 
     // Envoyer l'email d'invitation
-    const { data, error } = await resend.emails.send({
-      from: 'Agendize <no-reply@leonaar.com>',
-      to: email,
-      subject: `Invitation à rejoindre ${organization.name}`,
-      html: `
-        <h1>Vous avez été invité à rejoindre ${organization.name}</h1>
-        <p>Cliquez sur le lien ci-dessous pour accepter l'invitation :</p>
-        <a href="${process.env.NEXT_PUBLIC_APP_URL}/invitations/${token}">
-          Accepter l'invitation
-        </a>
-        <p>Ce lien expirera dans 7 jours.</p>
-      `,
-    })
+    try {
+      await sendInvitationEmail({
+        email,
+        organizationName: organization.name,
+        token,
+      })
 
-    if (error) {
-      console.error('Erreur Resend:', error)
+      return NextResponse.json(
+        { message: "Invitation envoyée avec succès" },
+        { status: 200 }
+      )
+    } catch (error) {
       return NextResponse.json(
         { error: "Erreur lors de l'envoi de l'email" },
         { status: 500 }
       )
     }
-
-    return NextResponse.json(
-      { message: "Invitation envoyée avec succès" },
-      { status: 200 }
-    )
   } catch (error) {
     console.error('Erreur:', error)
     return NextResponse.json(

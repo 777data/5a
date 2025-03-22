@@ -81,12 +81,14 @@ export function MembersTable({ members, organizationId }: MembersTableProps) {
   const handleResendInvitation = async (memberId: string, email: string) => {
     try {
       setIsLoading(memberId)
-      const response = await fetch(`/api/admin/organizations/${organizationId}/invitations/${memberId}/resend`, {
+      const response = await fetch(`/api/organizations/${organizationId}/invitations/${memberId}/resend`, {
         method: 'POST',
       })
 
+      const data = await response.json()
+
       if (!response.ok) {
-        throw new Error("Erreur lors du renvoi de l'invitation")
+        throw new Error(data.error || "Erreur lors du renvoi de l'invitation")
       }
 
       toast({
