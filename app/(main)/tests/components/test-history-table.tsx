@@ -14,78 +14,104 @@ import { fr } from "date-fns/locale"
 import { Button } from "@/components/ui/button"
 import { useSearchParams } from "next/navigation"
 import { useState, useEffect, Fragment } from "react"
+import { ChevronDown, ChevronRight, Eye } from "lucide-react"
 
-type ApiTest = {
+type ApiResult = {
   id: string
+  statusCode: number
+  duration: number
+  api: {
+    name: string
+    method: string
+  }
+  error?: string | null
+}
+
+type CollectionTest = {
+  id: string
+  name: string
   startedAt: Date
   duration: number
   status: string
+  results: ApiResult[]
+  _count: {
+    results: number
+  }
+}
+
+type TestSession = {
+  id: string
+  startedAt: Date
+  duration: number
   environment: {
     name: string
   }
   authentication: {
     name: string
   } | null
-  results: Array<{
-    id: string
-    statusCode: number
-    duration: number
-    api: {
-      name: string
-      method: string
-    }
-    error?: string | null
-  }>
+  collections: CollectionTest[]
   _count: {
-    results: number
+    collections: number
+    totalResults: number
   }
 }
 
 type TestHistoryTableProps = {
-  tests: ApiTest[]
+  tests: TestSession[]
 }
 
 export function TestHistoryTable({ tests }: TestHistoryTableProps) {
   const searchParams = useSearchParams()
-  const [expandedTest, setExpandedTest] = useState<string | null>(null)
+  const [expandedSession, setExpandedSession] = useState<string | null>(null)
+  const [expandedCollections, setExpandedCollections] = useState<Set<string>>(new Set())
 
-  // Recalculer le statut des tests en fonction des résultats
-  const testsWithRecalculatedStatus = tests.map(test => {
-    // Si au moins un résultat a un code 401, 403, 404 ou 5xx, le statut est FAILED
-    const hasAuthErrors = test.results.some(result => 
+  console.log('tests:', tests)
+
+  // Fonction pour afficher la table vide
+  const EmptyTable = () => (
+    <TableRow>
+      <TableCell colSpan={6} className="text-center py-6 text-gray-500">
+        Aucun test n&apos;a été effectué
+      </TableCell>
+    </TableRow>
+  )
+
+  // Recalculer le statut des collections en fonction des résultats
+  const calculateStatus = (results: ApiResult[]) => {
+    const hasAuthErrors = results.some(result => 
       result.statusCode === 401 || 
       result.statusCode === 403 || 
       result.statusCode === 404 || 
       result.statusCode >= 500
     )
     
-    // Si tous les résultats ont échoué, le statut est FAILED
-    const allFailed = test.results.every(result => result.statusCode >= 400)
+    const allFailed = results.every(result => result.statusCode >= 400)
+    const someFailedButNotAll = results.some(result => result.statusCode >= 400) && !allFailed
     
-    // Si au moins un résultat a échoué mais pas tous, le statut est PARTIAL
-    const someFailedButNotAll = test.results.some(result => result.statusCode >= 400) && !allFailed
+    if (hasAuthErrors || allFailed) return "FAILED"
+    if (someFailedButNotAll) return "PARTIAL"
+    return "SUCCESS"
+  }
+
+  // Recalculer le statut de la session en fonction des collections
+  const calculateSessionStatus = (collections: CollectionTest[] | undefined) => {
+    if (!collections || collections.length === 0) return "FAILED"
     
-    let recalculatedStatus = test.status
+    const collectionStatuses = collections.map(collection => 
+      calculateStatus(collection.results)
+    )
     
-    if (hasAuthErrors || allFailed) {
-      recalculatedStatus = "FAILED"
-    } else if (someFailedButNotAll) {
-      recalculatedStatus = "PARTIAL"
-    }
-    
-    return {
-      ...test,
-      recalculatedStatus
-    }
-  })
+    if (collectionStatuses.every(status => status === "SUCCESS")) return "SUCCESS"
+    if (collectionStatuses.every(status => status === "FAILED")) return "FAILED"
+    return "PARTIAL"
+  }
 
   // Vérifier si un testId est spécifié dans l'URL et déployer ce test
   useEffect(() => {
     const testId = searchParams?.get('testId')
     if (testId) {
-      setExpandedTest(testId)
+      setExpandedSession(testId)
       
-      // Faire défiler jusqu'au test après un court délai pour laisser le temps au DOM de se mettre à jour
       setTimeout(() => {
         const testElement = document.getElementById(`test-${testId}`)
         if (testElement) {
@@ -93,14 +119,43 @@ export function TestHistoryTable({ tests }: TestHistoryTableProps) {
         }
       }, 100)
       
-      // Nettoyer l'URL après avoir déployé le test
       const newUrl = window.location.pathname
       window.history.replaceState({}, '', newUrl)
     }
   }, [searchParams])
 
-  const toggleExpand = (testId: string) => {
-    setExpandedTest(expandedTest === testId ? null : testId)
+  const toggleSession = (sessionId: string) => {
+    setExpandedSession(expandedSession === sessionId ? null : sessionId)
+  }
+
+  const toggleCollection = (collectionId: string) => {
+    const newExpanded = new Set(expandedCollections)
+    if (newExpanded.has(collectionId)) {
+      newExpanded.delete(collectionId)
+    } else {
+      newExpanded.add(collectionId)
+    }
+    setExpandedCollections(newExpanded)
+  }
+
+  const getStatusBadge = (status: 'SUCCESS' | 'PARTIAL' | 'FAILED') => {
+    const styles = {
+      SUCCESS: 'bg-green-100 text-green-700',
+      PARTIAL: 'bg-yellow-100 text-yellow-700',
+      FAILED: 'bg-red-100 text-red-700'
+    } as const
+
+    const labels = {
+      SUCCESS: 'Succès',
+      PARTIAL: 'Partiel',
+      FAILED: 'Échec'
+    } as const
+
+    return (
+      <Badge className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status]}`}>
+        {labels[status]}
+      </Badge>
+    )
   }
 
   return (
@@ -117,118 +172,142 @@ export function TestHistoryTable({ tests }: TestHistoryTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {testsWithRecalculatedStatus.map((test) => (
-            <Fragment key={test.id}>
-              <TableRow
-                className="cursor-pointer hover:bg-gray-50"
-                onClick={() => toggleExpand(test.id)}
-              >
-                <TableCell className="px-4 py-3">
-                  {new Date(test.startedAt).toLocaleDateString()} {new Date(test.startedAt).toLocaleTimeString()}
-                  <div className="text-xs text-gray-500">
-                    {formatDistanceToNow(test.startedAt, { 
-                      addSuffix: true,
-                      locale: fr 
-                    })}
-                  </div>
-                </TableCell>
-                <TableCell className="px-4 py-3 font-medium">{test.environment.name}</TableCell>
-                <TableCell className="px-4 py-3">{test.authentication?.name || "-"}</TableCell>
-                <TableCell className="px-4 py-3">{(test.duration / 1000).toFixed(2)}s</TableCell>
-                <TableCell className="px-4 py-3">
-                  <Badge
-                    className={`px-2 py-1 rounded-full text-xs font-medium
-                      ${test.recalculatedStatus === "SUCCESS" ? 'bg-green-100 text-green-700' :
-                        test.recalculatedStatus === "PARTIAL" ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-red-100 text-red-700'
-                      }`}
-                  >
-                    {test.recalculatedStatus === "SUCCESS" ? "Succès" :
-                     test.recalculatedStatus === "PARTIAL" ? "Partiel" :
-                     "Échec"}
-                  </Badge>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {test._count.results} API{test._count.results > 1 ? "s" : ""}
-                  </div>
-                </TableCell>
-                <TableCell className="px-4 py-3 w-[140px]">
-                  <div className="flex gap-2">
+          {(!tests || tests.length === 0) ? (
+            <EmptyTable />
+          ) : (
+            tests.map((session) => (
+              <Fragment key={session?.id || 'unknown'}>
+                {/* Ligne principale de la session */}
+                <TableRow
+                  className="cursor-pointer hover:bg-gray-50"
+                  onClick={() => session?.id && toggleSession(session.id)}
+                >
+                  <TableCell className="px-4 py-3">
+                    {session?.startedAt && (
+                      <>
+                        {new Date(session.startedAt).toLocaleDateString()} {new Date(session.startedAt).toLocaleTimeString()}
+                        <div className="text-xs text-gray-500">
+                          {formatDistanceToNow(session.startedAt, { 
+                            addSuffix: true,
+                            locale: fr 
+                          })}
+                        </div>
+                      </>
+                    )}
+                  </TableCell>
+                  <TableCell className="px-4 py-3 font-medium">{session?.environment?.name || "-"}</TableCell>
+                  <TableCell className="px-4 py-3">{session?.authentication?.name || "-"}</TableCell>
+                  <TableCell className="px-4 py-3">{((session?.duration || 0) / 1000).toFixed(2)}s</TableCell>
+                  <TableCell className="px-4 py-3">
+                    {getStatusBadge(calculateSessionStatus(session.collections))}
+                    <div className="text-xs text-gray-500 mt-1">
+                      {session._count?.collections || 0} collection{(session._count?.collections || 0) > 1 ? "s" : ""} •{" "}
+                      {session._count?.totalResults || 0} API{(session._count?.totalResults || 0) > 1 ? "s" : ""}
+                    </div>
+                  </TableCell>
+                  <TableCell className="px-4 py-3 w-[140px]">
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
-                      title="Voir les détails"
-                      onClick={() => toggleExpand(test.id)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleSession(session.id)
+                      }}
                     >
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                        />
-                      </svg>
+                      {expandedSession === session.id ? (
+                        <ChevronDown className="h-4 w-4" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4" />
+                      )}
                     </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-              {expandedTest === test.id && (
-                <TableRow>
-                  <TableCell colSpan={6} className="p-4 bg-gray-50">
-                    <div className="space-y-3">
-                      <h3 className="text-sm font-medium">Résultats des tests</h3>
-                      <div className="space-y-2">
-                        {test.results.map((result) => (
-                          <div
-                            key={result.id}
-                            className="flex items-center justify-between p-3 bg-white rounded-md border"
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium
-                                ${result.api.method === 'GET' ? 'bg-blue-100 text-blue-700' :
-                                  result.api.method === 'POST' ? 'bg-green-100 text-green-700' :
-                                  result.api.method === 'PUT' ? 'bg-yellow-100 text-yellow-700' :
-                                  result.api.method === 'DELETE' ? 'bg-red-100 text-red-700' :
-                                  'bg-gray-100 text-gray-700'
-                                }`}
-                              >
-                                {result.api.method}
-                              </span>
-                              <span className="font-medium">{result.api.name}</span>
-                            </div>
-                            <span className="text-sm text-gray-500">{(result.duration / 1000).toFixed(2)}s</span>
-                            <Badge
-                              className={`px-2 py-1 rounded-full text-xs font-medium
-                                ${result.statusCode < 400 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
+                  </TableCell>
+                </TableRow>
+
+                {/* Détails de la session */}
+                {expandedSession === session.id && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="p-4 bg-gray-50">
+                      <div className="space-y-4">
+                        {Array.isArray(session?.collections) && session.collections.map((collection) => (
+                          <div key={collection?.id || 'unknown'} className="rounded-md border bg-white">
+                            {/* En-tête de la collection */}
+                            <div
+                              className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50"
+                              onClick={() => toggleCollection(collection.id)}
                             >
-                              {result.statusCode}
-                            </Badge>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    toggleCollection(collection.id)
+                                  }}
+                                >
+                                  {expandedCollections.has(collection.id) ? (
+                                    <ChevronDown className="h-4 w-4" />
+                                  ) : (
+                                    <ChevronRight className="h-4 w-4" />
+                                  )}
+                                </Button>
+                                <span className="font-medium">{collection.name}</span>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                <span className="text-sm text-gray-500">
+                                  {(collection.duration / 1000).toFixed(2)}s
+                                </span>
+                                {getStatusBadge(calculateStatus(collection.results))}
+                              </div>
+                            </div>
+
+                            {/* Résultats de la collection */}
+                            {expandedCollections.has(collection.id) && (
+                              <div className="border-t">
+                                <div className="p-3 space-y-2">
+                                  {Array.isArray(collection?.results) && collection.results.map((result) => (
+                                    <div
+                                      key={result?.id || 'unknown'}
+                                      className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium
+                                          ${result?.api.method === 'GET' ? 'bg-blue-100 text-blue-700' :
+                                            result?.api.method === 'POST' ? 'bg-green-100 text-green-700' :
+                                            result?.api.method === 'PUT' ? 'bg-yellow-100 text-yellow-700' :
+                                            result?.api.method === 'DELETE' ? 'bg-red-100 text-red-700' :
+                                            'bg-gray-100 text-gray-700'
+                                          }`}
+                                        >
+                                          {result?.api.method}
+                                        </span>
+                                        <span className="font-medium">{result?.api.name}</span>
+                                      </div>
+                                      <div className="flex items-center gap-4">
+                                        <span className="text-sm text-gray-500">
+                                          {(result?.duration / 1000).toFixed(2)}s
+                                        </span>
+                                        <Badge
+                                          className={`px-2 py-1 rounded-full text-xs font-medium
+                                            ${result?.statusCode < 400 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}
+                                        >
+                                          {result?.statusCode}
+                                        </Badge>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              )}
-            </Fragment>
-          ))}
-          {tests.length === 0 && (
-            <TableRow>
-              <TableCell colSpan={6} className="text-center py-6 text-gray-500">
-                Aucun test n&apos;a été effectué
-              </TableCell>
-            </TableRow>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </Fragment>
+            ))
           )}
         </TableBody>
       </Table>
