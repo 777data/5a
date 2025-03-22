@@ -18,6 +18,60 @@ export default function SignInPage() {
   const [password, setPassword] = useState('')
   const [showVerification, setShowVerification] = useState(false)
 
+  // Vérifier si nous avons un token de vérification dans l'URL
+  useEffect(() => {
+    const callbackUrl = searchParams?.get('callbackUrl')
+    if (!callbackUrl) return
+
+    const verifyMatch = callbackUrl.match(/\/auth\/verify\?token=([^&]+)/)
+    if (!verifyMatch) return
+
+    const token = decodeURIComponent(verifyMatch[1])
+    handleEmailVerification(token)
+  }, [])
+
+  const handleEmailVerification = async (token: string) => {
+    try {
+      setIsLoading(true)
+      const response = await fetch(`/api/auth/verify?token=${encodeURIComponent(token)}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store'
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Une erreur est survenue lors de la vérification")
+      }
+
+      // Si la vérification est réussie
+      toast({
+        title: "Email vérifié",
+        description: "Votre email a été vérifié avec succès. Vous pouvez maintenant vous connecter.",
+      })
+
+      // On met à jour l'email si il est retourné par l'API
+      if (data.user?.email) {
+        setEmail(data.user.email)
+      }
+
+      // On nettoie l'URL
+      router.replace('/auth/signin')
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur de vérification",
+        description: error instanceof Error ? error.message : "Une erreur est survenue lors de la vérification de l'email",
+        duration: 10000,
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleResendVerification = async () => {
     try {
       setIsLoading(true)
