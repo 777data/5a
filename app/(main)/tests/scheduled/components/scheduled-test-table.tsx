@@ -121,7 +121,7 @@ export function ScheduledTestTable({ scheduledTests }: ScheduledTestTableProps) 
                     <Button
                       variant="ghost"
                       size="icon"
-                      onClick={() => router.push(`/scheduled-tests/${test.id}`)}
+                      onClick={() => router.push(`/tests/scheduled/${test.id}`)}
                       className="h-8 w-8"
                       disabled={isLoading === test.id}
                     >

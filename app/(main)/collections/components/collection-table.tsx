@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { useApiTest } from "@/app/hooks/use-api-test"
-import { ApiTestDialog } from "@/app/components/api-test-dialog"
+import { ApiTestDialog } from "@/app/(main)/components/api-test-dialog"
 import { Edit, Play, Trash2, Copy } from "lucide-react"
 
 type Collection = {

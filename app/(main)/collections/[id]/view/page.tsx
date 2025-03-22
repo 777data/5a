@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { notFound } from "next/navigation"
-import { DraggableApiTable } from "@/app/collections/components/draggable-api-table"
+import { DraggableApiTable } from "../../components/draggable-api-table"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Plus, Edit } from "lucide-react"

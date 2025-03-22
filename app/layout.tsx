@@ -1,18 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Link from "next/link";
-import { Toaster } from "@/components/ui/toaster";
-import { cookies } from "next/headers";
-import { prisma } from "@/lib/prisma";
-import { ApplicationSelector } from "@/components/application-selector";
-import Image from "next/image";
-import { MainNav } from "@/app/components/main-nav";
-import { Footer } from '@/app/components/footer';
-import { ProfileMenu } from '@/app/components/profile-menu';
-import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { Providers } from './providers';
+import { getServerSession } from "next-auth";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,74 +14,18 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  const applications = await prisma.application.findMany({
-    orderBy: {
-      createdAt: 'desc',
-    },
-    select: {
-      id: true,
-      name: true,
-    },
-  });
-
-  const cookieStore = await cookies();
-  const activeApplicationId = cookieStore.get('activeApplicationId')?.value;
+}: {
+  children: React.ReactNode
+}) {
   const session = await getServerSession(authOptions);
 
   return (
     <html lang="fr">
       <body className={inter.className}>
         <Providers>
-          <div className="flex flex-col h-screen">
-            <div className="flex flex-1 min-h-0">
-              {/* Sidebar */}
-              <aside className="w-64 border-r bg-[#D6CFC1]">
-                <div className="flex h-20 items-center justify-center bg-[#D6CFC1]">
-                  <Link href="/" className="flex flex-col items-center w-full">
-                    <div className="flex flex-col items-center w-full px-4 pt-4">
-                      <Image 
-                        src="/AAAAA.png" 
-                        alt="AAAAA" 
-                        width={200} 
-                        height={100} 
-                        className="w-full h-auto"
-                        priority
-                      />
-                    </div>
-                  </Link>
-                </div>
-                <MainNav />
-              </aside>
-
-              {/* Main Content */}
-              <div className="flex-1 flex flex-col min-w-0">
-                {/* Header */}
-                <header className="h-16 border-b bg-white px-6 flex items-center justify-between">
-                  <h1 className="text-xl font-bold text-primary">Advanced Automated API Auditing & Assessment</h1>
-                  <div className="flex items-center space-x-4">
-                    <ApplicationSelector
-                      applications={applications}
-                      selectedApplicationId={activeApplicationId}
-                    />
-                    <ProfileMenu />
-                  </div>
-                </header>
-
-                {/* Content */}
-                <main className="flex-1 overflow-y-auto bg-gray-50">
-                  {children}
-                </main>
-              </div>
-            </div>
-            {/* Footer */}
-            <Footer />
-            <Toaster />
-          </div>
+          {children}
         </Providers>
       </body>
     </html>
-  );
-}
+  )
+} 
