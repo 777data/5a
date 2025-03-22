@@ -16,7 +16,7 @@ export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState(searchParams?.get('email') || '')
   const [password, setPassword] = useState('')
-  const [showVerification, setShowVerification] = useState(false)
+  const [showVerification, setShowVerification] = useState(searchParams?.get('showVerification') === 'true')
 
   // Vérifier si nous avons un token de vérification dans l'URL
   useEffect(() => {

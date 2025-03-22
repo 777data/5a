@@ -64,8 +64,8 @@ export function SignUpForm() {
         duration: 10000,
       })
 
-      // Redirection vers la page de connexion avec l'email pré-rempli
-      router.push(`/auth/signin?email=${encodeURIComponent(data.email)}`)
+      // Redirection vers la page de connexion avec l'email pré-rempli et showVerification
+      router.push(`/auth/signin?email=${encodeURIComponent(data.email)}&showVerification=true`)
       router.refresh()
     } catch (error) {
       console.error("Error:", error)
