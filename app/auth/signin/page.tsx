@@ -18,6 +18,7 @@ function SignInForm() {
   const [email, setEmail] = useState(searchParams?.get('email') || '')
   const [password, setPassword] = useState('')
   const [showVerification, setShowVerification] = useState(searchParams?.get('showVerification') === 'true')
+  const [error, setError] = useState<string | null>(searchParams?.get('error') || null)
 
   const handleEmailVerification = useCallback(async (token: string) => {
     try {
@@ -124,6 +125,7 @@ function SignInForm() {
     e.preventDefault()
     try {
       setIsLoading(true)
+      setError(null)
       const result = await signIn('credentials', {
         email,
         password,
@@ -139,11 +141,9 @@ function SignInForm() {
             duration: 10000,
           })
         } else {
-          toast({
-            variant: "destructive",
-            title: "Erreur",
-            description: result.error,
-          })
+          setError(result.error === "Utilisateur non trouvé" || result.error === "Mot de passe incorrect" 
+            ? "Email ou mot de passe incorrect" 
+            : result.error)
         }
         return
       }
@@ -151,12 +151,8 @@ function SignInForm() {
       if (result?.ok) {
         router.push('/')
       }
-    } catch {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la connexion",
-      })
+    } catch (error) {
+      setError("Une erreur est survenue lors de la connexion")
     } finally {
       setIsLoading(false)
     }
@@ -172,6 +168,11 @@ function SignInForm() {
           <p className="text-sm text-muted-foreground">
             Entrez vos identifiants pour vous connecter
           </p>
+          {error && (
+            <p className="mt-2 text-sm text-red-600">
+              {error}
+            </p>
+          )}
         </div>
 
         {showVerification && (
