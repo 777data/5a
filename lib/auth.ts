@@ -15,6 +15,18 @@ declare module 'next-auth' {
       role?: string;
     };
   }
+
+  interface User {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+    role?: string;
+  }
+
+  interface JWT {
+    role?: string;
+  }
 }
 
 const isDevelopment = process.env.NODE_ENV === 'development';

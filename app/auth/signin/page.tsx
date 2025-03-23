@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { signIn } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -9,7 +9,7 @@ import Link from 'next/link'
 import { Label } from '@/components/ui/label'
 import { Input } from "@/components/ui/input"
 
-export default function SignInPage() {
+function SignInForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { toast } = useToast()
@@ -209,5 +209,13 @@ export default function SignInPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<div>Chargement...</div>}>
+      <SignInForm />
+    </Suspense>
   )
 }

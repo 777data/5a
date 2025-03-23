@@ -1,6 +1,7 @@
 import cron from 'node-cron'
 import { prisma } from './prisma'
 import { testMultipleApis } from './api-test.service'
+import { randomUUID } from 'crypto'
 
 type ScheduledTest = {
   id: string
@@ -46,6 +47,8 @@ class CronService {
     // Arrêter la tâche existante si elle existe
     this.stopTask(test.id)
 
+    const sessionId = randomUUID()
+
     // Créer une nouvelle tâche
     const task = cron.schedule(test.cronExpression, async () => {
       try {
@@ -75,6 +78,7 @@ class CronService {
             applicationId: collection.applicationId,
             environmentId: test.environmentId,
             authenticationId: test.authenticationId,
+            sessionId,
             apis: apis.map(api => ({
               id: api.id,
               name: api.name,

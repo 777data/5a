@@ -3,16 +3,18 @@ import { prisma } from '@/lib/prisma'
 import { randomUUID } from 'crypto'
 import { sendInvitationEmail } from '@/lib/send-invitation-email'
 
-export async function POST(
-  request: Request,
-  { params }: { params: { organizationId: string } }
-) {
+export async function POST(request: Request) {
   try {
+    // Extraire les paramètres de l'URL
+    const url = new URL(request.url)
+    const segments = url.pathname.split('/')
+    const organizationId = segments[segments.indexOf("organizations") + 1]
+
     const { email } = await request.json()
 
     // Vérifier si l'organisation existe
     const organization = await prisma.organization.findUnique({
-      where: { id: params.organizationId },
+      where: { id: organizationId },
     })
 
     if (!organization) {
@@ -25,7 +27,7 @@ export async function POST(
     // Vérifier si l'utilisateur est déjà membre
     const existingMember = await prisma.organizationMember.findFirst({
       where: {
-        organizationId: params.organizationId,
+        organizationId,
         user: {
           email,
         },
@@ -42,7 +44,7 @@ export async function POST(
     // Vérifier s'il existe déjà une invitation en attente
     const existingInvitation = await prisma.organizationInvitation.findFirst({
       where: {
-        organizationId: params.organizationId,
+        organizationId,
         email,
         expiresAt: {
           gt: new Date(), // invitation non expirée
@@ -65,7 +67,7 @@ export async function POST(
       data: {
         email,
         token,
-        organizationId: params.organizationId,
+        organizationId,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Expire dans 7 jours
       },
     })

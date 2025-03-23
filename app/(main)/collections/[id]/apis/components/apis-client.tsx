@@ -33,6 +33,7 @@ type ApisClientProps = {
   applicationId: string
   environments: Environment[]
   authentications: Authentication[]
+  collectionId: string
 }
 
 export function ApisClient({
@@ -41,6 +42,7 @@ export function ApisClient({
   applicationId,
   environments,
   authentications,
+  collectionId,
 }: ApisClientProps) {
   const [selectedApiIds, setSelectedApiIds] = useState<string[]>([])
 
@@ -81,6 +83,7 @@ export function ApisClient({
         environments={environments}
         authentications={authentications}
         onTestSelected={setSelectedApiIds}
+        collectionId={collectionId}
       />
     </div>
   )

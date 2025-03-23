@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-export async function DELETE(
-  _request: Request,
-  { params }: { params: { organizationId: string; invitationId: string } }
-) {
+export async function DELETE(request: Request) {
   try {
-    const { organizationId, invitationId } = params
+    // Extraire les paramètres de l'URL
+    const url = new URL(request.url)
+    const segments = url.pathname.split('/')
+    const organizationId = segments[segments.indexOf("organizations") + 1]
+    const invitationId = segments[segments.indexOf("invitations") + 1]
 
     // Vérifier si l'invitation existe
     const invitation = await prisma.organizationInvitation.findFirst({

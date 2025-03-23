@@ -9,11 +9,13 @@ const updateOrganizationSchema = z.object({
   name: z.string().min(1),
 })
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { organizationId: string } }
-) {
+export async function DELETE(request: Request) {
   try {
+    // Extraire les paramètres de l'URL
+    const url = new URL(request.url)
+    const segments = url.pathname.split('/')
+    const organizationId = segments[segments.indexOf("organizations") + 1]
+
     const session = await getServerSession(authOptions)
 
     if (!session) {
@@ -26,7 +28,7 @@ export async function DELETE(
 
     const organization = await prisma.organization.delete({
       where: {
-        id: params.organizationId,
+        id: organizationId,
       },
     })
 
@@ -37,11 +39,13 @@ export async function DELETE(
   }
 }
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: { organizationId: string } }
-) {
+export async function PATCH(request: Request) {
   try {
+    // Extraire les paramètres de l'URL
+    const url = new URL(request.url)
+    const segments = url.pathname.split('/')
+    const organizationId = segments[segments.indexOf("organizations") + 1]
+
     const session = await getServerSession(authOptions)
 
     if (!session) {
@@ -57,7 +61,7 @@ export async function PATCH(
 
     const organization = await prisma.organization.update({
       where: {
-        id: params.organizationId,
+        id: organizationId,
       },
       data: {
         name: body.name,

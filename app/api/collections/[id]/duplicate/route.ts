@@ -45,7 +45,6 @@ export async function POST(request: Request) {
             headers: api.headers as Prisma.InputJsonValue,
             body: api.body as Prisma.InputJsonValue,
             order: api.order,
-            applicationId: api.applicationId,
             collectionId: newCollection.id,
           },
         });

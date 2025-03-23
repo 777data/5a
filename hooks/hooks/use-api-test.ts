@@ -7,7 +7,7 @@ import {
   testSingleApi as testSingleApiAction, 
   testCollection as testCollectionAction,
   resetLastResponse as resetLastResponseAction
-} from '@/app/actions/api-test.action'
+} from '@/app/_actions/api-test.action'
 
 // Type pour les données de réponse d'API
 type ApiResponseData = Record<string, unknown>

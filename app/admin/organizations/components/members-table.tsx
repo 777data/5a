@@ -136,7 +136,7 @@ export function MembersTable({ members, organizationId }: MembersTableProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => member.email && handleResendInvitation(member.id, member.email)}
+                  onClick={() => member.email && handleResendInvitation(member.id)}
                   disabled={isLoading === member.id || !member.email}
                   title="Renvoyer l'invitation"
                 >
