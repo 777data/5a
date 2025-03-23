@@ -151,7 +151,7 @@ function SignInForm() {
       if (result?.ok) {
         router.push('/')
       }
-    } catch (error) {
+    } catch {
       setError("Une erreur est survenue lors de la connexion")
     } finally {
       setIsLoading(false)
