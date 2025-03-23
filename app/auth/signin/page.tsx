@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast"
 import Link from 'next/link'
 import { Label } from '@/components/ui/label'
 import { Input } from "@/components/ui/input"
+import { Separator } from '@/components/ui/separator'
 
 function SignInForm() {
   const router = useRouter()
@@ -104,6 +105,21 @@ function SignInForm() {
     }
   }
 
+  const handleGoogleSignIn = async () => {
+    try {
+      const result = await signIn('google', {
+        callbackUrl: '/',
+        redirect: true,
+      })
+      
+      if (result?.error) {
+        console.error('SignIn error:', result.error)
+      }
+    } catch (error) {
+      console.error('SignIn catch error:', error)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
@@ -169,7 +185,7 @@ function SignInForm() {
               onClick={handleResendVerification}
               disabled={isLoading}
             >
-              Renvoyer l&eapos;email de vérification
+              Renvoyer l&apos;email de vérification
             </Button>
           </div>
         )}
@@ -202,9 +218,34 @@ function SignInForm() {
           </Button>
         </form>
 
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <Separator className="w-full" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-white px-2 text-muted-foreground">
+              Ou continuer avec
+            </span>
+          </div>
+        </div>
+
+        <Button 
+          variant="outline"
+          className="w-full flex items-center justify-center"
+          onClick={handleGoogleSignIn}
+        >
+          <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+            <path
+              fill="currentColor"
+              d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"
+            />
+          </svg>
+          Se connecter avec Google
+        </Button>
+
         <div className="text-center text-sm">
           <Link href="/auth/signup" className="text-primary hover:underline">
-            Créer un compte
+            Pas encore de compte ? S&apos;inscrire
           </Link>
         </div>
       </div>
