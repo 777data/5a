@@ -35,14 +35,8 @@ const COLORS = [
 ];
 
 export function ExecutionTimeChart({ data }: ExecutionTimeChartProps) {
-  if (!data.length) {
-    return <div className="h-[400px] flex items-center justify-center text-gray-500">
-      Aucune donnée disponible
-    </div>;
-  }
-
   // Récupérer tous les noms d'API uniques
-  const apiNames = Object.keys(data[0]).filter(key => key !== 'date');
+  const apiNames = data.length ? Object.keys(data[0]).filter(key => key !== 'date') : [];
 
   // Récupérer toutes les collections uniques
   const collections = useMemo(() => {
@@ -79,6 +73,12 @@ export function ExecutionTimeChart({ data }: ExecutionTimeChartProps) {
       setSelectedCollections(new Set(collections));
     }
   };
+
+  if (!data.length) {
+    return <div className="h-[400px] flex items-center justify-center text-gray-500">
+      Aucune donnée disponible
+    </div>;
+  }
 
   return (
     <div className="space-y-4">
