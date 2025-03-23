@@ -57,6 +57,7 @@ export type TestParams = {
   authenticationId?: string | null
   apis: ApiToTest[]
   previousResponse?: ApiResponseData
+  sessionId: string
 }
 
 /**
@@ -509,6 +510,7 @@ export async function testMultipleApis(params: TestParams): Promise<TestResults>
           applicationId: params.applicationId,
           environmentId: params.environmentId,
           authenticationId: params.authenticationId,
+          sessionId: params.sessionId,
           startedAt: new Date(startTime),
           duration,
           status: overallStatus,

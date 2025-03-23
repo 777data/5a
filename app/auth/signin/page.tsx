@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { signIn } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -18,19 +18,7 @@ export default function SignInPage() {
   const [password, setPassword] = useState('')
   const [showVerification, setShowVerification] = useState(searchParams?.get('showVerification') === 'true')
 
-  // Vérifier si nous avons un token de vérification dans l'URL
-  useEffect(() => {
-    const callbackUrl = searchParams?.get('callbackUrl')
-    if (!callbackUrl) return
-
-    const verifyMatch = callbackUrl.match(/\/auth\/verify\?token=([^&]+)/)
-    if (!verifyMatch) return
-
-    const token = decodeURIComponent(verifyMatch[1])
-    handleEmailVerification(token)
-  }, [])
-
-  const handleEmailVerification = async (token: string) => {
+  const handleEmailVerification = useCallback(async (token: string) => {
     try {
       setIsLoading(true)
       const response = await fetch(`/api/auth/verify?token=${encodeURIComponent(token)}`, {
@@ -70,7 +58,19 @@ export default function SignInPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [toast, router, setEmail])
+
+  // Vérifier si nous avons un token de vérification dans l'URL
+  useEffect(() => {
+    const callbackUrl = searchParams?.get('callbackUrl')
+    if (!callbackUrl) return
+
+    const verifyMatch = callbackUrl.match(/\/auth\/verify\?token=([^&]+)/)
+    if (!verifyMatch) return
+
+    const token = decodeURIComponent(verifyMatch[1])
+    handleEmailVerification(token)
+  }, [searchParams, handleEmailVerification])
 
   const handleResendVerification = async () => {
     try {
@@ -135,7 +135,7 @@ export default function SignInPage() {
       if (result?.ok) {
         router.push('/')
       }
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -169,7 +169,7 @@ export default function SignInPage() {
               onClick={handleResendVerification}
               disabled={isLoading}
             >
-              Renvoyer l'email de vérification
+              Renvoyer l&eapos;email de vérification
             </Button>
           </div>
         )}

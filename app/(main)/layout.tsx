@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./../globals.css";
 import Link from "next/link";
 import { Toaster } from "@/components/ui/toaster";
@@ -10,11 +9,6 @@ import Image from "next/image";
 import { MainNav } from "@/app/(main)/components/main-nav";
 import { Footer } from '@/app/(main)/components/footer';
 import { ProfileMenu } from '@/app/(main)/components/profile-menu';
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { Providers } from '../providers';
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "5A",

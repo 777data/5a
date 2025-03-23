@@ -4,12 +4,7 @@ import { prisma } from "@/lib/prisma"
 import type { OrganizationMember, User, OrganizationInvitation } from "@prisma/client"
 import { InviteMemberDialog } from "../../components/invite-member-dialog"
 import { MembersTable } from "../../components/members-table"
-
-interface MembersPageProps {
-  params: {
-    organizationId: string
-  }
-}
+import { PageParams } from "@/types/next"
 
 type MemberWithUser = OrganizationMember & {
   user: User | null
@@ -29,11 +24,14 @@ export const metadata: Metadata = {
   description: "Gérer les membres de l'organisation",
 }
 
-export default async function MembersPage({ params }: MembersPageProps) {
+export default async function MembersPage({ params }: PageParams<{ organizationId: string }>) {
+  // Attendre les paramètres de route avant de les utiliser
+  const { organizationId } = await params
+
   const [organization, pendingInvitations] = await Promise.all([
     prisma.organization.findUnique({
       where: {
-        id: params.organizationId,
+        id: organizationId,
       },
       include: {
         members: {
@@ -48,7 +46,7 @@ export default async function MembersPage({ params }: MembersPageProps) {
     }),
     prisma.organizationInvitation.findMany({
       where: {
-        organizationId: params.organizationId,
+        organizationId: organizationId,
         expiresAt: {
           gt: new Date(),
         },

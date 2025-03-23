@@ -1,20 +1,11 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./../globals.css";
 import Link from "next/link";
 import { Toaster } from "@/components/ui/toaster";
-import { cookies } from "next/headers";
-import { prisma } from "@/lib/prisma";
-import { ApplicationSelector } from "@/components/application-selector";
 import Image from "next/image";
 import { MainNav } from "@/app/(main)/components/main-nav";
 import { Footer } from '@/app/(main)/components/footer';
 import { ProfileMenu } from '@/app/(main)/components/profile-menu';
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { Providers } from '../providers';
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "5A",
@@ -26,19 +17,6 @@ export default async function AdminLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const applications = await prisma.application.findMany({
-    orderBy: {
-      createdAt: 'desc',
-    },
-    select: {
-      id: true,
-      name: true,
-    },
-  });
-
-  const cookieStore = await cookies();
-  const activeApplicationId = cookieStore.get('activeApplicationId')?.value;
-
   return (
     <div className="flex flex-col h-screen">
       <div className="flex flex-1 min-h-0">

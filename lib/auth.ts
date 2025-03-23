@@ -1,4 +1,4 @@
-import NextAuth, { NextAuthOptions } from 'next-auth';
+import { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
@@ -102,7 +102,7 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
         token.role = user.role || 'USER';

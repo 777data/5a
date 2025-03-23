@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
-import { signIn } from "next-auth/react"
 import Link from "next/link"
 
 const signUpSchema = z.object({
@@ -50,7 +49,7 @@ export function SignUpForm() {
     try {
       setIsLoading(true)
 
-      const { confirmPassword, ...submitData } = data
+      const { ...submitData } = data
 
       const response = await fetch("/api/auth/signup", {
         method: "POST",

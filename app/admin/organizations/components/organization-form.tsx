@@ -75,7 +75,7 @@ export function OrganizationForm({ organization }: OrganizationFormProps) {
 
       router.push("/admin/organizations")
       router.refresh()
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Erreur",

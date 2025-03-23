@@ -1,23 +1,20 @@
 import { notFound } from "next/navigation"
-
 import { prisma } from "@/lib/prisma"
 import { OrganizationForm } from "../../components/organization-form"
-
-interface EditOrganizationPageProps {
-  params: {
-    organizationId: string
-  }
-}
+import { PageParams } from "@/types/next"
 
 export default async function EditOrganizationPage({
   params,
-}: EditOrganizationPageProps) {
-  const isNew = params.organizationId === "new"
+}: PageParams<{ organizationId: string }>) {
+  // Attendre les paramètres de route avant de les utiliser
+  const { organizationId } = await params
+  
+  const isNew = organizationId === "new"
 
   const organization = !isNew
     ? await prisma.organization.findUnique({
         where: {
-          id: params.organizationId,
+          id: organizationId,
         },
         select: {
           id: true,

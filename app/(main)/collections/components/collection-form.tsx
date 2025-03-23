@@ -17,7 +17,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { useCookies } from "next-client-cookies"
 
 const collectionSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
@@ -33,13 +32,13 @@ type CollectionFormProps = {
     name: string
     description: string | null
     color: string | null
-  }
+  },
+  applicationId: string
 }
 
-export function CollectionForm({ collection }: CollectionFormProps) {
+export function CollectionForm({ collection, applicationId }: CollectionFormProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const cookies = useCookies()
   const [isLoading, setIsLoading] = useState(false)
 
   const form = useForm<CollectionFormValues>({
@@ -53,18 +52,7 @@ export function CollectionForm({ collection }: CollectionFormProps) {
 
   async function onSubmit(data: CollectionFormValues) {
     setIsLoading(true)
-    const applicationId = cookies.get('activeApplicationId')
-
-    if (!applicationId) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Aucune application sélectionnée",
-      })
-      setIsLoading(false)
-      return
-    }
-
+    
     try {
       const url = collection
         ? `/api/collections/${collection.id}`
@@ -79,7 +67,7 @@ export function CollectionForm({ collection }: CollectionFormProps) {
         },
         body: JSON.stringify({
           ...data,
-          applicationId,
+          applicationId: applicationId
         }),
       })
 

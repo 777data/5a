@@ -1,6 +1,7 @@
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
+import { Resend } from 'resend';
 
-const EMAIL_VERIFICATION_KEY = process.env.EMAIL_VERIFICATION_KEY;
+const EMAIL_VERIFICATION_KEY = process.env.EMAIL_VERIFICATION_KEY || '';
 if (!EMAIL_VERIFICATION_KEY) {
   throw new Error('EMAIL_VERIFICATION_KEY must be set');
 }
@@ -54,8 +55,6 @@ export function verifyToken(token: string): { email: string; expired: boolean } 
 export async function sendVerificationEmail(email: string, token: string) {
   const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify?token=${token}`;
   
-  // Utiliser le service d'envoi d'email configuré (par exemple Resend)
-  const { Resend } = require('resend');
   const resend = new Resend(process.env.RESEND_API_KEY);
 
   await resend.emails.send({

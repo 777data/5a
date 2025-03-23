@@ -74,7 +74,7 @@ export function ProfileForm({ user }: { user: User }) {
       setTimeout(() => {
         handleNavigation()
       }, 100)
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Erreur",

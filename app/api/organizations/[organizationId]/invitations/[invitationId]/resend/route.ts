@@ -42,7 +42,7 @@ export async function POST(
         { message: "Invitation renvoyée avec succès" },
         { status: 200 }
       )
-    } catch (error) {
+    } catch {
       return NextResponse.json(
         { error: "Erreur lors de l'envoi de l'email" },
         { status: 500 }

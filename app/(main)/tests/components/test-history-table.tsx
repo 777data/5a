@@ -14,7 +14,7 @@ import { fr } from "date-fns/locale"
 import { Button } from "@/components/ui/button"
 import { useSearchParams } from "next/navigation"
 import { useState, useEffect, Fragment } from "react"
-import { ChevronDown, ChevronRight, Eye } from "lucide-react"
+import { ChevronDown, ChevronRight } from "lucide-react"
 
 type ApiResult = {
   id: string

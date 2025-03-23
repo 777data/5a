@@ -72,7 +72,7 @@ export function MembersTable({ members, organizationId }: MembersTableProps) {
     }
   }
 
-  const handleResendInvitation = async (memberId: string, email: string) => {
+  const handleResendInvitation = async (memberId: string) => {
     try {
       setIsLoading(memberId)
       const response = await fetch(`/api/organizations/${organizationId}/invitations/${memberId}/resend`, {
@@ -108,7 +108,7 @@ export function MembersTable({ members, organizationId }: MembersTableProps) {
           <TableHead>Email</TableHead>
           <TableHead>Rôle</TableHead>
           <TableHead>Statut</TableHead>
-          <TableHead>Date d'ajout</TableHead>
+          <TableHead>Date d&apos;ajout</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -141,7 +141,7 @@ export function MembersTable({ members, organizationId }: MembersTableProps) {
                   title="Renvoyer l'invitation"
                 >
                   <Mail className="h-4 w-4" />
-                  <span className="sr-only">Renvoyer l'invitation</span>
+                  <span className="sr-only">Renvoyer l&eapos;invitation</span>
                 </Button>
               )}
               <Button

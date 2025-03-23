@@ -4,11 +4,11 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import {
   ApiToTest,
-  TestParams,
   TestResults,
   testMultipleApis
 } from '@/lib/api-test.service'
 import { prisma } from '@/lib/prisma'
+import { randomUUID } from 'crypto'
 
 // Définir un type pour les données de réponse
 type ApiResponseData = Record<string, unknown>;
@@ -79,14 +79,22 @@ type TestActionResponse = {
  * @returns Les résultats du test
  */
 export async function testApis(params: TestApiParams): Promise<TestActionResponse> {
-  console.log(`[API_TEST_ACTION] Début du test de ${params.apis.length} API(s)`, {
-    applicationId: params.applicationId,
-    environmentId: params.environmentId,
-    authenticationId: params.authenticationId,
-    hasPreviousResponse: !!params.previousResponse
-  })
-
+  console.log(`[API_TEST_ACTION] Test de ${params.apis.length} API(s)`)
+  
   try {
+    // Générer un sessionId unique pour ce test
+    const sessionId = randomUUID()
+
+    // Tester les APIs
+    const results = await testMultipleApis({
+      applicationId: params.applicationId,
+      environmentId: params.environmentId,
+      authenticationId: params.authenticationId,
+      apis: params.apis,
+      previousResponse: params.previousResponse,
+      sessionId
+    })
+
     // Vérifier que les données requises sont présentes
     if (!params.environmentId) {
       return {
@@ -112,20 +120,6 @@ export async function testApis(params: TestApiParams): Promise<TestActionRespons
       }
     }
     
-    // Utiliser la réponse précédente fournie ou celle stockée pour l'application
-    const previousResponse = params.previousResponse || getLastResponse(params.applicationId)
-
-    // Tester les APIs
-    const results = await testMultipleApis({
-      applicationId: params.applicationId,
-      environmentId: params.environmentId,
-      authenticationId: params.authenticationId,
-      apis: params.apis,
-      previousResponse
-    })
-
-    console.log(`[API_TEST_ACTION] Test terminé avec le statut ${results.status}`)
-
     // Stocker la dernière réponse pour les tests suivants
     if (results.results.length > 0) {
       const lastResult = results.results[results.results.length - 1]
@@ -189,83 +183,29 @@ export async function testSingleApi(
  * @returns Les résultats du test
  */
 export async function testCollection(params: TestCollectionParams): Promise<TestActionResponse> {
-  console.log(`[API_TEST_ACTION] Test de la collection ${params.collectionId}`, {
-    environmentId: params.environmentId,
-    authenticationId: params.authenticationId,
-    hasPreviousResponse: !!params.previousResponse
-  })
-
+  console.log(`[API_TEST_ACTION] Test de la collection ${params.collectionId}`)
+  
   try {
-    // Vérifier que les données requises sont présentes
-    if (!params.environmentId) {
-      return {
-        success: false,
-        message: "Veuillez sélectionner un environnement",
-        error: "L'ID de l'environnement est requis"
-      }
-    }
-
-    if (!params.collectionId) {
-      return {
-        success: false,
-        message: "L'ID de la collection est requis",
-        error: "L'ID de la collection est requis"
-      }
-    }
-
-    // Récupérer la collection et ses APIs
+    // Récupérer la collection avec ses APIs
     const collection = await prisma.collection.findUnique({
       where: { id: params.collectionId },
       include: {
+        application: true,
         apis: {
-          orderBy: { order: "asc" },
-          select: {
-            id: true,
-            name: true,
-            url: true,
-            method: true,
-            headers: true,
-            body: true,
-            order: true
-          }
-        },
-        application: {
-          select: {
-            id: true
-          }
+          orderBy: { order: 'asc' }
         }
       }
     })
 
     if (!collection) {
-      return {
-        success: false,
-        message: "Collection non trouvée",
-        error: "Collection non trouvée"
-      }
+      throw new Error("Collection introuvable")
     }
 
-    if (!collection.application) {
-      return {
-        success: false,
-        message: "Application non trouvée",
-        error: "Application non trouvée"
-      }
-    }
-
-    if (collection.apis.length === 0) {
-      return {
-        success: false,
-        message: "La collection ne contient aucune API",
-        error: "La collection ne contient aucune API"
-      }
-    }
-    
-    // Utiliser la réponse précédente fournie ou celle stockée pour l'application
+    // Récupérer la dernière réponse pour l'application
     const previousResponse = params.previousResponse || getLastResponse(collection.application.id)
 
-    // Préparer les APIs pour le test
-    const apis: ApiToTest[] = collection.apis.map(api => ({
+    // Convertir les APIs de la collection au format attendu
+    const apis = collection.apis.map(api => ({
       id: api.id,
       name: api.name,
       url: api.url,
@@ -275,13 +215,17 @@ export async function testCollection(params: TestCollectionParams): Promise<Test
       order: api.order
     }))
 
+    // Générer un sessionId unique pour ce test
+    const sessionId = randomUUID()
+
     // Tester les APIs
     const results = await testMultipleApis({
       applicationId: collection.application.id,
       environmentId: params.environmentId,
       authenticationId: params.authenticationId,
       apis,
-      previousResponse
+      previousResponse,
+      sessionId
     })
 
     console.log(`[API_TEST_ACTION] Test terminé avec le statut ${results.status}`)
