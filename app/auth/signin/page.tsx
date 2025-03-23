@@ -168,11 +168,6 @@ function SignInForm() {
           <p className="text-sm text-muted-foreground">
             Entrez vos identifiants pour vous connecter
           </p>
-          {error && (
-            <p className="mt-2 text-sm text-red-600">
-              {error}
-            </p>
-          )}
         </div>
 
         {showVerification && (
@@ -213,6 +208,12 @@ function SignInForm() {
               required
             />
           </div>
+
+          {error && (
+            <p className="mt-2 text-sm text-red-600">
+              {error}
+            </p>
+          )}
 
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Connexion..." : "Se connecter"}
