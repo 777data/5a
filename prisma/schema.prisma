@@ -88,6 +88,7 @@ model VariableValue {
 
 model ApiTest {
   id              String          @id @default(cuid())
+  sessionId       String          @unique
   startedAt       DateTime        @default(now())
   duration        Int             // en millisecondes
   status          String          // "SUCCESS" | "PARTIAL" | "FAILED"
