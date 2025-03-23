@@ -103,7 +103,7 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 jours
   },
   pages: {
-    signIn: '/aut/signin',
+    signIn: '/auth/signin',
     error: '/auth/error',
   },
   callbacks: {
@@ -121,6 +121,53 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
+    async signIn({ user, account, profile }) {
+      try {
+        if (!user.email) {
+          return false;
+        }
+
+        // En développement, autoriser toujours la connexion
+        if (isDevelopment) {
+          return true;
+        }
+
+        // Pour l'authentification par identifiants, pas de vérification de domaine
+        if (account?.provider === 'credentials') {
+          return true;
+        }
+
+        // Vérifier si un utilisateur existe déjà avec cet email
+        const existingUser = await prisma.user.findUnique({
+          where: { email: user.email },
+          include: { accounts: true }
+        });
+
+        if (existingUser) {
+          // Si l'utilisateur existe déjà mais n'a pas de compte Google lié
+          if (!existingUser.accounts.some(acc => acc.provider === 'google')) {
+            // Lier le compte Google à l'utilisateur existant
+            await prisma.account.create({
+              data: {
+                userId: existingUser.id,
+                type: account?.type || 'oauth',
+                provider: 'google',
+                providerAccountId: account?.providerAccountId || '',
+                access_token: account?.access_token,
+                token_type: account?.token_type,
+                scope: account?.scope,
+                id_token: account?.id_token,
+              }
+            });
+          }
+        }
+
+        return true;
+      } catch (error) {
+        console.error('SignIn callback error:', error);
+        return false;
+      }
+    },
     async redirect({ url, baseUrl }) {
       console.log('Redirect callback:', { url, baseUrl });
       
@@ -136,32 +183,6 @@ export const authOptions: NextAuthOptions = {
       
       // Par défaut, rediriger vers la page d'accueil
       return baseUrl;
-    },
-    async signIn({ user, account }) {
-      try {
-        console.log('SignIn callback:', { user, account });
-        
-        // En développement, autoriser toujours la connexion
-        if (isDevelopment) {
-          return true;
-        }
-
-        // Pour l'authentification par identifiants, pas de vérification de domaine
-        if (account?.provider === 'credentials') {
-          return true;
-        }
-
-        // Pour Google, vérifier que l'email se termine par @agendize.com
-        if (!user.email?.endsWith('@agendize.com')) {
-          console.log('Unauthorized email domain:', user.email);
-          return false;
-        }
-
-        return true;
-      } catch (error) {
-        console.error('SignIn callback error:', error);
-        return false;
-      }
     },
   },
   debug: isDevelopment,
