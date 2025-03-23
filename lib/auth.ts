@@ -121,7 +121,7 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account }) {
       try {
         if (!user.email) {
           return false;
