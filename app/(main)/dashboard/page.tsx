@@ -44,7 +44,39 @@ export default async function DashboardPage() {
         include: {
           api: {
             select: {
+              id: true,
               name: true,
+              collection: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  // Récupérer tous les tests de toutes les collections
+  const allTests = await prisma.collection.findMany({
+    where: {
+      applicationId: activeApplicationId,
+    },
+    select: {
+      name: true,
+      apis: {
+        select: {
+          id: true,
+          name: true,
+          testResults: {
+            take: 50,
+            orderBy: {
+              createdAt: 'desc',
+            },
+            select: {
+              duration: true,
+              createdAt: true,
             },
           },
         },
@@ -67,16 +99,29 @@ export default async function DashboardPage() {
   });
 
   // Préparer les données pour le graphique
-  const chartData = recentTests.map((test) => ({
-    date: format(test.startedAt, "dd/MM HH:mm", { locale: fr }),
-    ...test.results.reduce(
-      (acc, result) => ({
-        ...acc,
-        [result.api.name]: result.duration,
-      }),
-      {}
-    ),
-  })).reverse();
+  const testsByDate = new Map();
+
+  // Parcourir toutes les collections et leurs APIs
+  allTests.forEach(collection => {
+    collection.apis.forEach(api => {
+      api.testResults.forEach(result => {
+        const dateKey = format(result.createdAt, "dd/MM HH:mm", { locale: fr });
+        if (!testsByDate.has(dateKey)) {
+          testsByDate.set(dateKey, { date: dateKey });
+        }
+        const dateData = testsByDate.get(dateKey);
+        dateData[`${collection.name} - ${api.name}`] = result.duration;
+      });
+    });
+  });
+
+  // Convertir la Map en tableau et trier par date
+  const chartData = Array.from(testsByDate.values())
+    .sort((a, b) => {
+      const dateA = new Date(a.date.split('/').reverse().join('/'));
+      const dateB = new Date(b.date.split('/').reverse().join('/'));
+      return dateA.getTime() - dateB.getTime();
+    });
 
   return (
     <div className="p-8 space-y-8">
