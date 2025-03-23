@@ -70,13 +70,17 @@ export default async function DashboardPage() {
           id: true,
           name: true,
           testResults: {
-            take: 50,
-            orderBy: {
-              createdAt: 'desc',
-            },
             select: {
               duration: true,
               createdAt: true,
+              apiTest: {
+                select: {
+                  startedAt: true,
+                },
+              },
+            },
+            orderBy: {
+              createdAt: 'asc',
             },
           },
         },
@@ -105,7 +109,7 @@ export default async function DashboardPage() {
   allTests.forEach(collection => {
     collection.apis.forEach(api => {
       api.testResults.forEach(result => {
-        const dateKey = format(result.createdAt, "dd/MM HH:mm", { locale: fr });
+        const dateKey = format(result.apiTest.startedAt, "dd/MM HH:mm", { locale: fr });
         if (!testsByDate.has(dateKey)) {
           testsByDate.set(dateKey, { date: dateKey });
         }
