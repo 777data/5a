@@ -17,7 +17,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
     }
 
-    const user = await requireAuth();
     const json = await request.json()
     const body = createApplicationSchema.parse(json)
 
