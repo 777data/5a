@@ -1,7 +1,10 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from "next-auth"
 import { randomUUID } from 'crypto'
 import { sendInvitationEmail } from '@/lib/send-invitation-email'
+
+import { authOptions } from "@/lib/auth"
 
 export async function POST(request: Request) {
   try {
@@ -12,6 +15,16 @@ export async function POST(request: Request) {
 
     const { email } = await request.json()
 
+    const session = await getServerSession(authOptions)
+
+    if (!session) {
+      return new NextResponse("Unauthorized", { status: 401 })
+    }
+
+    if (session.user.role !== "SUPER_ADMIN") {
+      return new NextResponse("Forbidden", { status: 403 })
+    }
+    
     // Vérifier si l'organisation existe
     const organization = await prisma.organization.findUnique({
       where: { id: organizationId },
