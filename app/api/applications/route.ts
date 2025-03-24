@@ -7,7 +7,7 @@ import { authOptions, requireAuth } from "@/lib/auth"
 
 const createApplicationSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
-  organizationId: z.string().optional(),
+  organizationId: z.string().nullish(),
 })
 
 export async function POST(request: Request) {
@@ -22,22 +22,28 @@ export async function POST(request: Request) {
 
     const { organizationId, ...applicationData } = body
 
-    const application = await prisma.application.create({
-      data: {
-        ...applicationData,
-        owner: {
+    const createData = {
+      ...applicationData,
+      owner: {
+        connect: {
+          id: session.user.id
+        }
+      }
+    }
+
+    // Ajouter la connexion à l'organisation seulement si organizationId est une chaîne non vide
+    if (organizationId && typeof organizationId === 'string' && organizationId.trim() !== '') {
+      Object.assign(createData, {
+        organization: {
           connect: {
-            id: session.user.id
+            id: organizationId
           }
-        },
-        ...(organizationId && {
-          organization: {
-            connect: {
-              id: organizationId
-            }
-          }
-        })
-      },
+        }
+      })
+    }
+
+    const application = await prisma.application.create({
+      data: createData
     })
 
     return NextResponse.json(application)
