@@ -20,14 +20,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { useState } from "react"
 import { useToast } from "@/hooks/use-toast"
-import { Edit, Trash2 } from "lucide-react"
+import { Edit, Share2, Trash2 } from "lucide-react"
 
 type Application = {
   id: string
   name: string
   createdAt: Date
+  organization?: {
+    id: string
+    name: string
+  } | null
 }
 
 type ApplicationWithCount = Application & {
@@ -92,7 +102,23 @@ export function ApplicationTable({ applications }: ApplicationTableProps) {
           <TableBody>
             {applications.map((application) => (
               <TableRow key={application.id}>
-                <TableCell className="font-medium">{application.name}</TableCell>
+                <TableCell className="font-medium">
+                  <div className="flex items-center gap-2">
+                    {application.name}
+                    {application.organization && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Share2 className="h-4 w-4 text-gray-500" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Partagé avec {application.organization.name}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell>
                   <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                     {application._count.environments} environnements
