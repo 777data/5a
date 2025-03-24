@@ -36,7 +36,10 @@ const COLORS = [
 
 export function ExecutionTimeChart({ data }: ExecutionTimeChartProps) {
   // Récupérer tous les noms d'API uniques
-  const apiNames = data.length ? Object.keys(data[0]).filter(key => key !== 'date') : [];
+  const apiNames = useMemo(() => {
+    if (!data.length) return [];
+    return Object.keys(data[0]).filter(key => key !== 'date');
+  }, [data]);
 
   // Récupérer toutes les collections uniques
   const collections = useMemo(() => {

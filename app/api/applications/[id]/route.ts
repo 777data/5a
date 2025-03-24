@@ -1,17 +1,53 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import * as z from "zod"
+import { requireAuth } from "@/lib/auth"
 
 const updateApplicationSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
+  organizationId: z.string().optional().nullable(),
 })
+
+async function checkApplicationPermissions(applicationId: string, userId: string) {
+  const application = await prisma.application.findFirst({
+    where: {
+      id: applicationId,
+      OR: [
+        { ownerId: userId },
+        {
+          organization: {
+            members: {
+              some: {
+                userId: userId,
+                role: {
+                  in: ["OWNER", "ADMIN"]
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  });
+
+  if (!application) {
+    throw new Error("Non autorisé");
+  }
+
+  return application;
+}
 
 export async function PUT(request: Request) {
   try {
+    const user = await requireAuth();
+    
     // Extraire les paramètres de l'URL
     const url = new URL(request.url);
     const segments = url.pathname.split('/');
     const id = segments[segments.indexOf("applications") + 1];
+    
+    // Vérifier les permissions
+    await checkApplicationPermissions(id, user.id);
     
     const json = await request.json()
     const body = updateApplicationSchema.parse(json)
@@ -21,14 +57,36 @@ export async function PUT(request: Request) {
         id: id,
       },
       data: body,
+      include: {
+        organization: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        owner: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
     })
 
     return NextResponse.json(application)
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Données invalides", issues: error.issues },
         { status: 400 }
+      )
+    }
+
+    if (error instanceof Error && error.message === "Non autorisé") {
+      return NextResponse.json(
+        { error: "Non autorisé" },
+        { status: 401 }
       )
     }
 
@@ -42,23 +100,16 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const user = await requireAuth();
+    
     // Extraire les paramètres de l'URL
     const url = new URL(request.url);
     const segments = url.pathname.split('/');
     const id = segments[segments.indexOf("applications") + 1];
     
-    // Vérifier si l'application existe
-    const application = await prisma.application.findUnique({
-      where: { id: id },
-    })
-
-    if (!application) {
-      return NextResponse.json(
-        { error: "Application non trouvée" },
-        { status: 404 }
-      )
-    }
-
+    // Vérifier les permissions
+    await checkApplicationPermissions(id, user.id);
+    
     // Utiliser une transaction pour supprimer toutes les entités liées
     await prisma.$transaction(async (tx) => {
       // 1. Supprimer les résultats de tests d'API
@@ -115,7 +166,14 @@ export async function DELETE(request: Request) {
     })
 
     return new NextResponse(null, { status: 204 })
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === "Non autorisé") {
+      return NextResponse.json(
+        { error: "Non autorisé" },
+        { status: 401 }
+      )
+    }
+
     console.error("[APPLICATIONS_DELETE]", error)
     return NextResponse.json(
       { error: "Une erreur est survenue lors de la suppression de l'application" },

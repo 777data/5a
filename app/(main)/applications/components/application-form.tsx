@@ -15,16 +15,35 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { useEffect, useState } from "react"
 
 const applicationSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
+  organizationId: z.string().optional().nullable(),
 })
 
 type ApplicationFormValues = z.infer<typeof applicationSchema>
 
+type Organization = {
+  id: string
+  name: string
+}
+
 type Application = {
   id: string
   name: string
+  organizationId?: string | null
+  organization?: {
+    id: string
+    name: string
+  } | null
 }
 
 type ApplicationFormProps = {
@@ -34,13 +53,41 @@ type ApplicationFormProps = {
 export function ApplicationForm({ application }: ApplicationFormProps) {
   const router = useRouter()
   const { toast } = useToast()
+  const [organizations, setOrganizations] = useState<Organization[]>([])
+  const [isLoading, setIsLoading] = useState(false)
 
   const form = useForm<ApplicationFormValues>({
     resolver: zodResolver(applicationSchema),
     defaultValues: {
       name: application?.name || "",
+      organizationId: application?.organizationId || null,
     },
   })
+
+  useEffect(() => {
+    async function fetchOrganizations() {
+      try {
+        setIsLoading(true)
+        const response = await fetch('/api/organizations')
+        if (!response.ok) {
+          throw new Error('Erreur lors de la récupération des organisations')
+        }
+        const data = await response.json()
+        setOrganizations(data)
+      } catch (error) {
+        console.error('Error:', error)
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger les organisations",
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchOrganizations()
+  }, [toast])
 
   async function onSubmit(data: ApplicationFormValues) {
     try {
@@ -93,6 +140,37 @@ export function ApplicationForm({ application }: ApplicationFormProps) {
               <FormControl>
                 <Input placeholder="Nom de l'application" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="organizationId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Organisation</FormLabel>
+              <Select
+                disabled={isLoading}
+                onValueChange={field.onChange}
+                value={field.value || undefined}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner une organisation (optionnel)" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="">
+                    Aucune organisation
+                  </SelectItem>
+                  {organizations.map((org) => (
+                    <SelectItem key={org.id} value={org.id}>
+                      {org.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
