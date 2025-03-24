@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import * as z from "zod"
-import { requireAuth } from "@/lib/auth"
+
+import { getServerSession } from "next-auth"
+import { authOptions, requireAuth } from "@/lib/auth"
 
 const createApplicationSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
@@ -10,14 +12,32 @@ const createApplicationSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
+    }
+
     const user = await requireAuth();
     const json = await request.json()
     const body = createApplicationSchema.parse(json)
 
+    const { organizationId, ...applicationData } = body
+
     const application = await prisma.application.create({
       data: {
-        ...body,
-        ownerId: user.id,
+        ...applicationData,
+        owner: {
+          connect: {
+            id: session.user.id
+          }
+        },
+        ...(organizationId && {
+          organization: {
+            connect: {
+              id: organizationId
+            }
+          }
+        })
       },
     })
 

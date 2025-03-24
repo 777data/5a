@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
+import { getServerSession } from "next-auth"
 import { prisma } from '@/lib/prisma'
+
+import { authOptions } from "@/lib/auth"
 
 export async function DELETE(request: Request) {
   try {
@@ -9,6 +12,16 @@ export async function DELETE(request: Request) {
     const organizationId = segments[segments.indexOf("organizations") + 1]
     const invitationId = segments[segments.indexOf("invitations") + 1]
 
+    const session = await getServerSession(authOptions)
+
+    if (!session) {
+      return new NextResponse("Unauthorized", { status: 401 })
+    }
+
+    if (session.user.role !== "SUPER_ADMIN") {
+      return new NextResponse("Forbidden", { status: 403 })
+    }
+    
     // Vérifier si l'invitation existe
     const invitation = await prisma.organizationInvitation.findFirst({
       where: {
