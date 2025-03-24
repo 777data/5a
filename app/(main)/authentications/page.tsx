@@ -1,7 +1,7 @@
 import { cookies } from "next/headers"
 import { notFound } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
+import { Plus, Share2 } from "lucide-react"
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { AuthenticationTable } from "./components/authentication-table"
@@ -30,7 +30,12 @@ export default async function AuthenticationsPage() {
         orderBy: {
           createdAt: 'desc'
         }
-      }
+      },
+      organization: {
+        select: {
+          id: true,
+        },
+      },
     }
   })
 
@@ -49,8 +54,10 @@ export default async function AuthenticationsPage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-2xl font-bold">Authentifications</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Application : {application.name}
+          <p className="flex flex-row text-sm text-gray-500 mt-1 gap-2">
+            Application : {application.name} {application.organization && (
+                      <Share2 className="h-4 w-4 text-gray-500" />
+            )}
           </p>
         </div>
         <Button asChild>

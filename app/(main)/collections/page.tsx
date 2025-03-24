@@ -4,7 +4,7 @@ import { CollectionTable } from "./components/collection-table"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { Plus } from "lucide-react"
+import { Plus, Share2 } from "lucide-react"
 
 export default async function CollectionsPage() {
   const cookieStore = await cookies()
@@ -50,6 +50,11 @@ export default async function CollectionsPage() {
           name: true,
         },
       },
+      organization: {
+        select: {
+          id: true
+        },
+      },
     },
   })
 
@@ -61,9 +66,13 @@ export default async function CollectionsPage() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Collections</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Application : {application.name}
+          <h1 className="text-2xl font-bold">
+            Collections 
+          </h1>
+          <p className="flex flex-row text-sm text-gray-500 mt-1 gap-2">
+            Application : {application.name} {application.organization && (
+                      <Share2 className="h-4 w-4 text-gray-500" />
+            )}
           </p>
         </div>
         <Button asChild>
