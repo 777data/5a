@@ -14,6 +14,12 @@ export default async function ApplicationsPage() {
           environments: true,
         },
       },
+      organization: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
     },
   })
 

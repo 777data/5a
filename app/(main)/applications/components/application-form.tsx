@@ -161,14 +161,22 @@ export function ApplicationForm({ application }: ApplicationFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="">
-                    Aucune organisation
-                  </SelectItem>
-                  {organizations.map((org) => (
-                    <SelectItem key={org.id} value={org.id}>
-                      {org.name}
+                  {organizations.length > 0 ? (
+                    <>
+                      <SelectItem value="null">
+                        Aucune organisation
+                      </SelectItem>
+                      {organizations.map((org) => (
+                        <SelectItem key={org.id} value={org.id}>
+                          {org.name}
+                        </SelectItem>
+                      ))}
+                    </>
+                  ) : (
+                    <SelectItem value="null">
+                      Aucune organisation disponible
                     </SelectItem>
-                  ))}
+                  )}
                 </SelectContent>
               </Select>
               <FormMessage />
