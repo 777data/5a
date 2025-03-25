@@ -4,6 +4,16 @@ import { cookies } from "next/headers";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ExecutionTimeChart } from "./components/execution-time-chart";
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Tableau de Bord',
+  description: 'Visualisez vos métriques de tests API en temps réel, suivez les performances et analysez les tendances.',
+  openGraph: {
+    title: 'Tableau de Bord - 5A',
+    description: 'Visualisez vos métriques de tests API en temps réel, suivez les performances et analysez les tendances.',
+  }
+}
 
 export default async function DashboardPage() {  
   const cookieStore = await cookies();

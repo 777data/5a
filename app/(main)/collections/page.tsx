@@ -5,6 +5,16 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { Plus, Share2 } from "lucide-react"
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Collections de Tests',
+  description: 'Gérez vos collections de tests API, organisez vos scénarios de test et collaborez avec votre équipe.',
+  openGraph: {
+    title: 'Collections de Tests - 5A',
+    description: 'Gérez vos collections de tests API, organisez vos scénarios de test et collaborez avec votre équipe.',
+  }
+}
 
 export default async function CollectionsPage() {
   const cookieStore = await cookies()

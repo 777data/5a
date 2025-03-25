@@ -1,0 +1,12 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Disallow private routes
+Disallow: /api/
+Disallow: /auth/
+Disallow: /admin/
+Disallow: /invitations/
+
+# Sitemap location
+Sitemap: https://leonaar.com/sitemap.xml 
