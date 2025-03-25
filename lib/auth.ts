@@ -128,13 +128,14 @@ export const authOptions: NextAuthOptions = {
           return false;
         }
 
-        // En développement, autoriser toujours la connexion
-        if (isDevelopment) {
-          return true;
-        }
 
         // Pour l'authentification par identifiants, pas de vérification de domaine
         if (account?.provider === 'credentials') {
+          // Mettre à jour lastLogin pour l'authentification par identifiants
+          await prisma.user.update({
+            where: { email: user.email },
+            data: { lastLogin: new Date() }
+          });
           return true;
         }
 
@@ -145,6 +146,12 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (existingUser) {
+          // Mettre à jour lastLogin pour l'utilisateur existant
+          await prisma.user.update({
+            where: { id: existingUser.id },
+            data: { lastLogin: new Date() }
+          });
+
           // Si l'utilisateur existe déjà mais n'a pas de compte Google lié
           if (!existingUser.accounts.some(acc => acc.provider === 'google')) {
             // Lier le compte Google à l'utilisateur existant
