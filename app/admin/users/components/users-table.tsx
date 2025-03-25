@@ -25,18 +25,7 @@ import { useToast } from "@/hooks/use-toast"
 import { formatDate } from "@/lib/utils"
 import { deleteUser, validateUserEmail } from "../actions"
 import { Badge } from "@/components/ui/badge"
-
-type User = {
-  id: string
-  name: string | null
-  email: string
-  emailVerified: Date | null
-  image: string | null
-  role: string
-  password: string | null
-  createdAt: Date
-  lastLogin: Date | null
-}
+import { User } from "@prisma/client"
 
 type UsersTableProps = {
   users: User[]
