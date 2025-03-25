@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Trash2, CheckCircle, XCircle, Mail } from "lucide-react"
+import { Trash2, Mail } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,10 +36,6 @@ type User = {
   password: string | null
   createdAt: Date
   lastLogin: Date | null
-  accounts: any[]
-  sessions: any[]
-  organizations: any[]
-  applications: any[]
 }
 
 type UsersTableProps = {
@@ -63,7 +59,7 @@ export function UsersTable({ users: initialUsers }: UsersTableProps) {
         title: "Utilisateur supprimé",
         description: "L'utilisateur a été supprimé avec succès.",
       })
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -88,7 +84,7 @@ export function UsersTable({ users: initialUsers }: UsersTableProps) {
         title: "Email validé",
         description: "L'email de l'utilisateur a été validé avec succès.",
       })
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -164,7 +160,7 @@ export function UsersTable({ users: initialUsers }: UsersTableProps) {
             <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
             <AlertDialogDescription>
               Cette action est irréversible. Cela supprimera définitivement le compte
-              de l'utilisateur et toutes ses données associées.
+              de l&apos;utilisateur et toutes ses données associées.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
