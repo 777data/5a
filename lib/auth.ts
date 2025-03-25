@@ -128,17 +128,6 @@ export const authOptions: NextAuthOptions = {
           return false;
         }
 
-
-        // Pour l'authentification par identifiants, pas de vérification de domaine
-        if (account?.provider === 'credentials') {
-          // Mettre à jour lastLogin pour l'authentification par identifiants
-          await prisma.user.update({
-            where: { email: user.email },
-            data: { lastLogin: new Date() }
-          });
-          return true;
-        }
-
         // Vérifier si un utilisateur existe déjà avec cet email
         const existingUser = await prisma.user.findUnique({
           where: { email: user.email },
