@@ -4,7 +4,23 @@ import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 
 export async function getUsers() {
-  const users = await prisma.user.findMany()
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      emailVerified: true,
+      image: true,
+      role: true,
+      password: true,
+      createdAt: true,
+      lastLogin: true
+    },
+    orderBy: {
+      createdAt: 'desc'
+    }
+  })
+
   return users
 }
 
