@@ -1,12 +1,36 @@
 import { prisma } from "@/lib/prisma"
 import { ApplicationTable } from "./components/application-table"
 import Link from "next/link"
+import { requireAuth } from "@/lib/auth"
 import { Plus } from "lucide-react"
 
 export default async function ApplicationsPage() {
+  const user = await requireAuth();
   const applications = await prisma.application.findMany({
+    where: {
+      OR: [
+        // Applications dont l'utilisateur est propriétaire
+        { ownerId: user.id },
+        // Applications des organisations dont l'utilisateur est membre
+        {
+          AND: [
+            // S'assurer que l'application a une organisation
+            { organizationId: { not: null } },
+            {
+              organization: {
+                members: {
+                  some: {
+                    userId: user.id
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
     orderBy: {
-      createdAt: 'desc',
+      createdAt: "desc",
     },
     include: {
       _count: {
@@ -18,6 +42,13 @@ export default async function ApplicationsPage() {
         select: {
           id: true,
           name: true,
+        },
+      },
+      owner: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
         },
       },
     },

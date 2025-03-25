@@ -81,13 +81,19 @@ export async function GET() {
           { ownerId: user.id },
           // Applications des organisations dont l'utilisateur est membre
           {
-            organization: {
-              members: {
-                some: {
-                  userId: user.id
+            AND: [
+              // S'assurer que l'application a une organisation
+              { organizationId: { not: null } },
+              {
+                organization: {
+                  members: {
+                    some: {
+                      userId: user.id
+                    }
+                  }
                 }
               }
-            }
+            ]
           }
         ]
       },
