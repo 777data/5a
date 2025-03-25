@@ -3,19 +3,17 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { InvitationValidator } from "./invitation-validator"
+import { PageParams } from "@/types/next"
 
-interface InvitationPageProps {
-  params: {
-    token: string
-  }
-}
+export default async function InvitationPage({ params }: PageParams<{ token: string }>) {
+  // Attendre les paramètres avant de les utiliser
+  const { token } = await params
 
-export default async function InvitationPage({ params }: InvitationPageProps) {
   const session = await getServerSession(authOptions)
   
   // Vérifier si l'invitation existe
   const invitation = await prisma.organizationInvitation.findUnique({
-    where: { token: params.token },
+    where: { token },
     include: {
       organization: true
     }
@@ -32,7 +30,7 @@ export default async function InvitationPage({ params }: InvitationPageProps) {
 
   // Si l'utilisateur n'est pas connecté, rediriger vers la page de connexion
   if (!session) {
-    redirect(`/auth/signin?callbackUrl=${encodeURIComponent(`/invitations/${params.token}`)}`)
+    redirect(`/auth/signin?callbackUrl=${encodeURIComponent(`/invitations/${token}`)}`)
   }
 
   // Vérifier si l'email de l'invitation correspond à l'utilisateur connecté
