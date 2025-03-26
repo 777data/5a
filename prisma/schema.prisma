@@ -202,6 +202,7 @@ model ScheduledTest {
   authenticationId String?
   authentication  Authentication? @relation(fields: [authenticationId], references: [id])
   cronExpression  String
+  notificationEmails String[]
   isActive        Boolean     @default(true)
   lastRunAt       DateTime?
   createdAt       DateTime    @default(now())

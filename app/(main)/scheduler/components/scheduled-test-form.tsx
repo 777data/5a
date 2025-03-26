@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useRouter } from "next/navigation"
+import { Input } from "@/components/ui/input"
 
 const cronLocalization = {
   everyText: "chaque",
@@ -107,6 +108,16 @@ const scheduledTestSchema = z.object({
   environmentId: z.string().min(1, "L'environnement est requis"),
   authenticationId: z.string().optional(),
   cronExpression: z.string().min(1, "La périodicité est requise"),
+  notificationEmails: z.union([z.string(), z.array(z.string())]).transform((val) => {
+    if (Array.isArray(val)) return val;
+    if (typeof val !== 'string') return [];
+    return val.split(',')
+      .map(email => email.trim())
+      .filter(email => email.length > 0);
+  }).refine(
+    emails => emails.every(email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)),
+    "Un ou plusieurs emails sont invalides"
+  )
 })
 
 type ScheduledTestFormData = z.infer<typeof scheduledTestSchema>
@@ -139,6 +150,7 @@ type ScheduledTestFormProps = {
     environmentId: string
     authenticationId?: string
     cronExpression: string
+    notificationEmails?: string
   }
 }
 
@@ -159,6 +171,7 @@ export function ScheduledTestForm({
       environmentId: initialData?.environmentId ?? '',
       authenticationId: initialData?.authenticationId ?? '',
       cronExpression: initialData?.cronExpression ?? '* * * * *',
+      notificationEmails: initialData?.notificationEmails ? initialData.notificationEmails.split(',') : [],
     },
   })
 
@@ -327,10 +340,33 @@ export function ScheduledTestForm({
               )}
             />
           </div>
+
+          <div className="flex flex-col gap-6 rounded-lg border p-6 bg-card">
+            <h2 className="text-lg font-semibold">Notifications</h2>
+            <FormField
+              control={form.control}
+              name="notificationEmails"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Destinataires des rapports</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="email1@exemple.com, email2@exemple.com"
+                      {...field}
+                    />
+                  </FormControl>
+                  <p className="text-sm text-muted-foreground">
+                    Séparez les adresses email par des virgules
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
         <Button type="submit" className="w-full" disabled={isLoading}>
-          Programmer le test
+          {initialData ? "Modifier le test" : "Programmer le test"}
         </Button>
       </form>
     </Form>

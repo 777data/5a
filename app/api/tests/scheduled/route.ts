@@ -9,6 +9,13 @@ const scheduledTestSchema = z.object({
   environmentId: z.string().min(1, "L'environnement est requis"),
   authenticationId: z.string().optional(),
   cronExpression: z.string().min(1, "La périodicité est requise"),
+  notificationEmails: z.union([z.string(), z.array(z.string())]).transform((val) => {
+    if (Array.isArray(val)) return val;
+    if (typeof val !== 'string') return [];
+    return val.split(',')
+      .map(email => email.trim())
+      .filter(email => email.length > 0);
+  })
 })
 
 export async function POST(request: Request) {
@@ -56,6 +63,7 @@ export async function POST(request: Request) {
           ? { connect: { id: body.authenticationId } }
           : undefined,
         cronExpression: body.cronExpression,
+        notificationEmails: body.notificationEmails,
       },
       include: {
         collections: true,

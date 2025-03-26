@@ -83,6 +83,7 @@ export default async function ScheduledTestPage({ params }: PageParams<{ id: str
           environmentId: scheduledTest!.environmentId,
           authenticationId: scheduledTest!.authenticationId || undefined,
           cronExpression: scheduledTest!.cronExpression,
+          notificationEmails: scheduledTest!.notificationEmails.join(',')
         } : undefined}
       />
     </div>
