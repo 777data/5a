@@ -5,6 +5,7 @@ import { Plus, Share2 } from "lucide-react"
 import Link from "next/link"
 import { prisma } from "@/lib/prisma"
 import { AuthenticationTable } from "./components/authentication-table"
+import type { Authentication  } from "@prisma/client"
 
 export default async function AuthenticationsPage() {
   const cookieStore = await cookies()
@@ -43,7 +44,7 @@ export default async function AuthenticationsPage() {
     notFound()
   }
 
-  const formattedAuthentications = application.authentications.map(auth => ({
+  const formattedAuthentications = application.authentications.map((auth: Authentication) => ({
     ...auth,
     createdAt: auth.createdAt.toISOString(),
     updatedAt: auth.updatedAt.toISOString()

@@ -1,6 +1,6 @@
 'use client'
 
-import { Environment } from "@prisma/client"
+import type { Environment } from "@prisma/client"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
