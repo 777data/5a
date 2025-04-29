@@ -26,6 +26,7 @@ export const metadata: Metadata = {
   authors: [{ name: 'Leonaar' }],
   creator: 'Leonaar',
   publisher: 'Leonaar',
+  metadataBase: new URL('https://5a.leonaar.com'),
   robots: {
     index: true,
     follow: true,
@@ -57,10 +58,6 @@ export const metadata: Metadata = {
     images: ['/twitter-image.png'],
     creator: '@leonaar',
   },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-  },
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
@@ -80,9 +77,15 @@ export const metadata: Metadata = {
     ]
   },
   manifest: '/site.webmanifest',
-  themeColor: '#ffffff',
   applicationName: '5A',
 };
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1
+}
+
+export const themeColor = '#ffffff'
 
 export default async function RootLayout({
   children,
