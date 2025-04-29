@@ -24,7 +24,6 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useRouter } from "next/navigation"
-import { Input } from "@/components/ui/input"
 
 const cronLocalization = {
   everyText: "chaque",
@@ -108,7 +107,7 @@ const scheduledTestSchema = z.object({
   environmentId: z.string().min(1, "L'environnement est requis"),
   authenticationId: z.string().optional(),
   cronExpression: z.string().min(1, "La périodicité est requise"),
-  notificationEmails: z.union([z.string(), z.array(z.string())]).transform((val) => {
+  /*notificationEmails: z.union([z.string(), z.array(z.string())]).transform((val) => {
     if (Array.isArray(val)) return val;
     if (typeof val !== 'string') return [];
     return val.split(',')
@@ -117,7 +116,7 @@ const scheduledTestSchema = z.object({
   }).refine(
     emails => emails.every(email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)),
     "Un ou plusieurs emails sont invalides"
-  )
+  )*/
 })
 
 type ScheduledTestFormData = z.infer<typeof scheduledTestSchema>
@@ -171,7 +170,7 @@ export function ScheduledTestForm({
       environmentId: initialData?.environmentId ?? '',
       authenticationId: initialData?.authenticationId ?? '',
       cronExpression: initialData?.cronExpression ?? '* * * * *',
-      notificationEmails: initialData?.notificationEmails ? initialData.notificationEmails.split(',') : [],
+      //notificationEmails: initialData?.notificationEmails ? initialData.notificationEmails.split(',') : [],
     },
   })
 
@@ -341,7 +340,7 @@ export function ScheduledTestForm({
             />
           </div>
 
-          <div className="flex flex-col gap-6 rounded-lg border p-6 bg-card">
+          {/*<div className="flex flex-col gap-6 rounded-lg border p-6 bg-card">
             <h2 className="text-lg font-semibold">Notifications</h2>
             <FormField
               control={form.control}
@@ -362,7 +361,7 @@ export function ScheduledTestForm({
                 </FormItem>
               )}
             />
-          </div>
+          </div>*/}
         </div>
 
         <Button type="submit" className="w-full" disabled={isLoading}>
