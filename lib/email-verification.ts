@@ -53,7 +53,7 @@ export function verifyToken(token: string): { email: string; expired: boolean } 
 }
 
 export async function sendVerificationEmail(email: string, token: string) {
-  const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/verify?token=${token}`;
+  const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/auth/signin/?callbackUrl=/auth/verify?token=${token}`;
   
   const resend = new Resend(process.env.RESEND_API_KEY);
 
