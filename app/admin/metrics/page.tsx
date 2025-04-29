@@ -2,8 +2,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { getServerMetrics } from "./actions"
 import { ServerMetricsChart } from "./components/server-metrics-chart"
 import { ServerMetricsCards } from "./components/server-metrics-cards"
+import { getAppVersion } from "@/lib/getAppVersion";
 
 export default async function MetricsPage() {
+  const version = getAppVersion();
   const metrics = await getServerMetrics()
 
   return (
@@ -12,14 +14,16 @@ export default async function MetricsPage() {
         <h1 className="text-2xl font-bold">Administration - Métriques Serveur</h1>
       </div>
 
+      <div>Version de l&apos;application : {version}</div>
+
       <ServerMetricsCards metrics={metrics} />
 
-      <div className="grid gap-4">
+      <div className="grid gap-4">        
         <Card>
           <CardHeader>
             <CardTitle>Historique des performances</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent>          
             <ServerMetricsChart metrics={metrics} />
           </CardContent>
         </Card>
