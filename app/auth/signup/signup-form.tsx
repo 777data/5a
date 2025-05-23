@@ -4,7 +4,6 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -17,18 +16,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
-
-const signUpSchema = z.object({
-  name: z.string().min(1, "Le nom est requis"),
-  email: z.string().email("Email invalide"),
-  password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
-  confirmPassword: z.string()
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Les mots de passe ne correspondent pas",
-  path: ["confirmPassword"],
-})
-
-type SignUpValues = z.infer<typeof signUpSchema>
+import { signUpSchema, type SignUpValues } from "@/lib/schemas/auth.schema"
 
 export function SignUpForm() {
   const router = useRouter()
@@ -49,7 +37,7 @@ export function SignUpForm() {
     try {
       setIsLoading(true)
 
-      const { ...submitData } = data
+      const { confirmPassword, ...submitData } = data
 
       const response = await fetch("/api/auth/signup", {
         method: "POST",

@@ -3,17 +3,12 @@ import { z } from "zod"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
 import { generateVerificationToken, sendVerificationEmail } from "@/lib/email-verification"
-
-const signupSchema = z.object({
-  name: z.string().min(1, "Le nom est requis"),
-  email: z.string().email("Email invalide"),
-  password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
-})
+import { signUpApiSchema } from "@/lib/schemas/auth.schema"
 
 export async function POST(request: Request) {
   try {
     const json = await request.json()
-    const body = signupSchema.parse(json)
+    const body = signUpApiSchema.parse(json)
 
     // Vérifier si l'utilisateur existe déjà
     const existingUser = await prisma.user.findUnique({
