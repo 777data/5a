@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useRouter } from "next/navigation"
+import { Input } from "@/components/ui/input"
 
 const cronLocalization = {
   everyText: "chaque",
@@ -107,16 +108,13 @@ const scheduledTestSchema = z.object({
   environmentId: z.string().min(1, "L'environnement est requis"),
   authenticationId: z.string().optional(),
   cronExpression: z.string().min(1, "La périodicité est requise"),
-  /*notificationEmails: z.union([z.string(), z.array(z.string())]).transform((val) => {
-    if (Array.isArray(val)) return val;
-    if (typeof val !== 'string') return [];
-    return val.split(',')
-      .map(email => email.trim())
-      .filter(email => email.length > 0);
-  }).refine(
-    emails => emails.every(email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)),
+  notificationEmails: z.string().min(1, "Au moins un email est requis").refine(
+    (val) => {
+      const emails = val.split(',').map(email => email.trim()).filter(Boolean);
+      return emails.every(email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+    },
     "Un ou plusieurs emails sont invalides"
-  )*/
+  ),
 })
 
 type ScheduledTestFormData = z.infer<typeof scheduledTestSchema>
@@ -170,7 +168,7 @@ export function ScheduledTestForm({
       environmentId: initialData?.environmentId ?? '',
       authenticationId: initialData?.authenticationId ?? '',
       cronExpression: initialData?.cronExpression ?? '* * * * *',
-      //notificationEmails: initialData?.notificationEmails ? initialData.notificationEmails.split(',') : [],
+      notificationEmails: initialData?.notificationEmails ?? '',
     },
   })
 
@@ -182,7 +180,10 @@ export function ScheduledTestForm({
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          notificationEmails: data.notificationEmails.split(',').map(email => email.trim()).filter(Boolean),
+        }),
       })
 
       let errorMessage: string | undefined;
@@ -340,7 +341,7 @@ export function ScheduledTestForm({
             />
           </div>
 
-          {/*<div className="flex flex-col gap-6 rounded-lg border p-6 bg-card">
+          <div className="flex flex-col gap-6 rounded-lg border p-6 bg-card">
             <h2 className="text-lg font-semibold">Notifications</h2>
             <FormField
               control={form.control}
@@ -351,17 +352,18 @@ export function ScheduledTestForm({
                   <FormControl>
                     <Input
                       placeholder="email1@exemple.com, email2@exemple.com"
-                      {...field}
+                      value={Array.isArray(field.value) ? field.value.join(', ') : field.value}
+                      onChange={(e) => field.onChange(e.target.value)}
                     />
                   </FormControl>
                   <p className="text-sm text-muted-foreground">
-                    Séparez les adresses email par des virgules
+                    Séparez les adresses email par des virgules. Vous recevrez un rapport après chaque exécution des tests.
                   </p>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          </div>*/}
+          </div>
         </div>
 
         <Button type="submit" className="w-full" disabled={isLoading}>
