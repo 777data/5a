@@ -98,6 +98,8 @@ export default async function DashboardPage() {
     },
   });
 
+  console.log(allTests);
+
   // Calculer les statistiques globales
   const totalTests = await prisma.apiTest.count({
     where: {
@@ -115,6 +117,7 @@ export default async function DashboardPage() {
   // Préparer les données pour le graphique
   const testsByDate = new Map();
 
+  console.log("-----", allTests);
   // Parcourir toutes les collections et leurs APIs
   allTests.forEach(collection => {
     collection.apis.forEach(api => {

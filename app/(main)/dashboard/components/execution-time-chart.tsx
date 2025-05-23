@@ -38,7 +38,16 @@ export function ExecutionTimeChart({ data }: ExecutionTimeChartProps) {
   // Récupérer tous les noms d'API uniques
   const apiNames = useMemo(() => {
     if (!data.length) return [];
-    return Object.keys(data[0]).filter(key => key !== 'date');
+    // Récupérer toutes les clés uniques de toutes les entrées
+    const allKeys = new Set<string>();
+    data.forEach(entry => {
+      Object.keys(entry).forEach(key => {
+        if (key !== 'date') {
+          allKeys.add(key);
+        }
+      });
+    });
+    return Array.from(allKeys);
   }, [data]);
 
   // Récupérer toutes les collections uniques
@@ -49,9 +58,9 @@ export function ExecutionTimeChart({ data }: ExecutionTimeChartProps) {
     return Array.from(uniqueCollections);
   }, [apiNames]);
 
-  // État pour les collections sélectionnées
-  const [selectedCollections, setSelectedCollections] = useState<Set<string>>(
-    new Set(collections)
+  // État pour les collections sélectionnées - toutes sélectionnées par défaut
+  const [selectedCollections, setSelectedCollections] = useState<Set<string>>(() => 
+    new Set(collections) // Initialiser avec toutes les collections
   );
 
   // Filtrer les API en fonction des collections sélectionnées
